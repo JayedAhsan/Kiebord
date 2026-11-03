@@ -3,6 +3,8 @@
 
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <!-- Khipro spec OTA: manual "check for updates" only (KhiproSpecsScreen) -->
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <queries>
         <intent>

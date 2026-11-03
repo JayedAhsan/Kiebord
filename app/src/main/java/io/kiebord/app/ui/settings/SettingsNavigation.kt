@@ -12,6 +12,7 @@ sealed class SettingsScreen {
     data object CorrectionsSuggestions : SettingsScreen()
     data object Clipboard : SettingsScreen()
     data object VoiceTyping : SettingsScreen()
+    data object KhiproSpecs : SettingsScreen()
     data object BackupRestore : SettingsScreen()
     data object About : SettingsScreen()
     data object Onboarding : SettingsScreen()

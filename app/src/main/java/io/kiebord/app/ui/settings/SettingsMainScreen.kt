@@ -241,6 +241,13 @@ fun SettingsMainScreen(
             )
 
             SettingsNavigationItem(
+                title = "Khipro Specs",
+                icon = Icons.Outlined.Keyboard,
+                position = GroupPosition.MIDDLE,
+                onClick = { onNavigate(SettingsScreen.KhiproSpecs) }
+            )
+
+            SettingsNavigationItem(
                 title = "Backup & Restore",
                 icon = Icons.Outlined.SettingsBackupRestore,
                 position = GroupPosition.BOTTOM,
