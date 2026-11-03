@@ -163,6 +163,20 @@ fun KeyboardLayoutsScreen(
                 badge = "প্রভাত",
                 description = "Fixed traditional layout",
                 layoutDef = PredefinedLayouts.BengaliProbhat
+            ),
+            LayoutCardData(
+                id = KiebordPreferences.LAYOUT_BN_KHIPRO_CLASSIC,
+                name = "ক্ষিপ্র ক্লাসিক",
+                badge = "ক্ষিপ্র",
+                description = "Compositional m17n spec (khipro)",
+                layoutDef = layoutRepo.getLayout(KiebordPreferences.LAYOUT_BN_KHIPRO_CLASSIC)
+            ),
+            LayoutCardData(
+                id = KiebordPreferences.LAYOUT_BN_KHIPRO_DARK,
+                name = "ক্ষিপ্র ডার্ক",
+                badge = "ডার্ক",
+                description = "Compositional, manual conjuncts (fuser /)",
+                layoutDef = layoutRepo.getLayout(KiebordPreferences.LAYOUT_BN_KHIPRO_DARK)
             )
         )
     }

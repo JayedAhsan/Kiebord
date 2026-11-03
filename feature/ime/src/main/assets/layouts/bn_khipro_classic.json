@@ -1,0 +1,310 @@
+{
+  "id": "bn_khipro_classic",
+  "name": "ক্ষিপ্র ক্লাসিক",
+  "displayName": "ক্ষিপ্র ক্লাসিক",
+  "language": "bn",
+  "direction": "LTR",
+  "rows": [
+    {
+      "keys": [
+        {
+          "label": "q",
+          "shiftedLabel": "Q",
+          "flickUp": "1",
+          "moreKeys": [
+            "1"
+          ]
+        },
+        {
+          "label": "w",
+          "shiftedLabel": "W",
+          "flickUp": "2",
+          "moreKeys": [
+            "2"
+          ]
+        },
+        {
+          "label": "e",
+          "shiftedLabel": "E",
+          "flickUp": "3",
+          "moreKeys": [
+            "3"
+          ]
+        },
+        {
+          "label": "r",
+          "shiftedLabel": "R",
+          "flickUp": "4",
+          "moreKeys": [
+            "4"
+          ]
+        },
+        {
+          "label": "t",
+          "shiftedLabel": "T",
+          "flickUp": "5",
+          "moreKeys": [
+            "5"
+          ]
+        },
+        {
+          "label": "y",
+          "shiftedLabel": "Y",
+          "flickUp": "6",
+          "moreKeys": [
+            "`",
+            "6"
+          ]
+        },
+        {
+          "label": "u",
+          "shiftedLabel": "U",
+          "flickUp": "7",
+          "moreKeys": [
+            "7"
+          ]
+        },
+        {
+          "label": "i",
+          "shiftedLabel": "I",
+          "flickUp": "8",
+          "moreKeys": [
+            "8"
+          ]
+        },
+        {
+          "label": "o",
+          "shiftedLabel": "O",
+          "flickUp": "9",
+          "moreKeys": [
+            "9"
+          ]
+        },
+        {
+          "label": "p",
+          "shiftedLabel": "P",
+          "flickUp": "0",
+          "moreKeys": [
+            "0"
+          ]
+        }
+      ]
+    },
+    {
+      "startPaddingWeight": 0.5,
+      "endPaddingWeight": 0.5,
+      "keys": [
+        {
+          "label": "a",
+          "shiftedLabel": "A",
+          "flickUp": "@",
+          "moreKeys": [
+            "@"
+          ]
+        },
+        {
+          "label": "s",
+          "shiftedLabel": "S",
+          "flickUp": "#",
+          "moreKeys": [
+            "#"
+          ]
+        },
+        {
+          "label": "d",
+          "shiftedLabel": "D",
+          "flickUp": "$",
+          "moreKeys": [
+            "$"
+          ]
+        },
+        {
+          "label": "f",
+          "shiftedLabel": "F",
+          "flickUp": "%",
+          "moreKeys": [
+            "%"
+          ]
+        },
+        {
+          "label": "g",
+          "shiftedLabel": "G",
+          "flickUp": "&",
+          "moreKeys": [
+            "&"
+          ]
+        },
+        {
+          "label": "h",
+          "shiftedLabel": "H",
+          "flickUp": "-",
+          "moreKeys": [
+            "-"
+          ]
+        },
+        {
+          "label": "j",
+          "shiftedLabel": "J",
+          "flickUp": "+",
+          "moreKeys": [
+            "+"
+          ]
+        },
+        {
+          "label": "k",
+          "shiftedLabel": "K",
+          "flickUp": "(",
+          "moreKeys": [
+            "("
+          ]
+        },
+        {
+          "label": "l",
+          "shiftedLabel": "L",
+          "flickUp": ")",
+          "moreKeys": [
+            ")"
+          ]
+        }
+      ]
+    },
+    {
+      "keys": [
+        {
+          "label": "/",
+          "widthWeight": 1.5
+        },
+        {
+          "label": "z",
+          "shiftedLabel": "Z",
+          "flickUp": "*",
+          "moreKeys": [
+            "ACTION_SELECT_ALL",
+            "*"
+          ]
+        },
+        {
+          "label": "x",
+          "shiftedLabel": "X",
+          "flickUp": "\"",
+          "moreKeys": [
+            "ACTION_CUT",
+            "\""
+          ]
+        },
+        {
+          "label": "c",
+          "shiftedLabel": "C",
+          "flickUp": "'",
+          "moreKeys": [
+            "ACTION_COPY",
+            "'"
+          ]
+        },
+        {
+          "label": "v",
+          "shiftedLabel": "V",
+          "flickUp": ":",
+          "moreKeys": [
+            "ACTION_PASTE",
+            ":"
+          ]
+        },
+        {
+          "label": "b",
+          "shiftedLabel": "B",
+          "flickUp": ";",
+          "moreKeys": [
+            ";"
+          ]
+        },
+        {
+          "label": "n",
+          "shiftedLabel": "N",
+          "flickUp": "!",
+          "moreKeys": [
+            "!"
+          ]
+        },
+        {
+          "label": "m",
+          "shiftedLabel": "M",
+          "flickUp": "?",
+          "moreKeys": [
+            "?"
+          ]
+        },
+        {
+          "type": "DELETE",
+          "icon": "backspace",
+          "widthWeight": 1.5
+        }
+      ]
+    },
+    {
+      "keys": [
+        {
+          "label": "?১২৩",
+          "type": "SYMBOLS",
+          "widthWeight": 1.5,
+          "slidingInput": true
+        },
+        {
+          "label": ",",
+          "widthWeight": 1.0,
+          "moreKeys": [
+            "ACTION_SETTINGS",
+            "ACTION_ONE_HANDED"
+          ]
+        },
+        {
+          "type": "SWITCH_LANGUAGE",
+          "icon": "globe",
+          "widthWeight": 1.0
+        },
+        {
+          "label": " ",
+          "type": "SPACE",
+          "icon": "space",
+          "widthWeight": 3.0
+        },
+        {
+          "label": ";",
+          "widthWeight": 1.0
+        },
+        {
+          "label": "।",
+          "widthWeight": 1.0,
+          "moreKeysColumns": 9,
+          "moreKeys": [
+            ".",
+            ",",
+            "?",
+            "!",
+            "#",
+            ")",
+            "(",
+            "/",
+            ";",
+            "'",
+            "@",
+            ":",
+            "-",
+            "\"",
+            "+",
+            "%",
+            "&"
+          ]
+        },
+        {
+          "type": "ACTION",
+          "icon": "enter",
+          "widthWeight": 1.5,
+          "moreKeys": [
+            "ACTION_EMOJI"
+          ]
+        }
+      ]
+    }
+  ]
+}

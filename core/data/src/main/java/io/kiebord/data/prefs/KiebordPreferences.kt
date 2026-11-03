@@ -102,6 +102,8 @@ data class KiebordPreferences(
         const val LAYOUT_BN_PROBHAT = "bn_probhat"
         const val LAYOUT_BN_NATIONAL = "bn_national"
         const val LAYOUT_BN_EASY = "bn_easy"
+        const val LAYOUT_BN_KHIPRO_CLASSIC = "bn_khipro_classic"
+        const val LAYOUT_BN_KHIPRO_DARK = "bn_khipro_dark"
         const val LAYOUT_AR_ARABIC = "ar_arabic"
     }
 }

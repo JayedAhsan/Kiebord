@@ -95,6 +95,16 @@ fun OnboardingLayoutSelectionStep(
                 id = KiebordPreferences.LAYOUT_BN_PROBHAT,
                 title = "প্রভাত",
                 subtitle = "Popular fixed Bengali layout"
+            ),
+            LayoutOption(
+                id = KiebordPreferences.LAYOUT_BN_KHIPRO_CLASSIC,
+                title = "ক্ষিপ্র ক্লাসিক",
+                subtitle = "Compositional Bangla, no Shift needed"
+            ),
+            LayoutOption(
+                id = KiebordPreferences.LAYOUT_BN_KHIPRO_DARK,
+                title = "ক্ষিপ্র ডার্ক",
+                subtitle = "Compositional with manual conjuncts"
             )
         )
     }

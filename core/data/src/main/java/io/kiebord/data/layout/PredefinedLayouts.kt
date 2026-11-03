@@ -244,6 +244,134 @@ object PredefinedLayouts {
         )
     )
 
+    val KhiproClassic = KeyboardLayoutDef(
+        id = "bn_khipro_classic",
+        name = "ক্ষিপ্র ক্লাসিক",
+        displayName = "ক্ষিপ্র ক্লাসিক",
+        language = "bn",
+        rows = listOf(
+            KeyRow(
+                listOf(
+                    KeyDef("q", "Q", flickUp = "1", moreKeys = listOf("1")),
+                    KeyDef("w", "W", flickUp = "2", moreKeys = listOf("2")),
+                    KeyDef("e", "E", flickUp = "3", moreKeys = listOf("3")),
+                    KeyDef("r", "R", flickUp = "4", moreKeys = listOf("4")),
+                    KeyDef("t", "T", flickUp = "5", moreKeys = listOf("5")),
+                    KeyDef("y", "Y", flickUp = "6", moreKeys = listOf("`", "6")),
+                    KeyDef("u", "U", flickUp = "7", moreKeys = listOf("7")),
+                    KeyDef("i", "I", flickUp = "8", moreKeys = listOf("8")),
+                    KeyDef("o", "O", flickUp = "9", moreKeys = listOf("9")),
+                    KeyDef("p", "P", flickUp = "0", moreKeys = listOf("0"))
+                )
+            ),
+            KeyRow(
+                keys = listOf(
+                    KeyDef("a", "A", flickUp = "@", moreKeys = listOf("@")),
+                    KeyDef("s", "S", flickUp = "#", moreKeys = listOf("#")),
+                    KeyDef("d", "D", flickUp = "$", moreKeys = listOf("$")),
+                    KeyDef("f", "F", flickUp = "%", moreKeys = listOf("%")),
+                    KeyDef("g", "G", flickUp = "&", moreKeys = listOf("&")),
+                    KeyDef("h", "H", flickUp = "-", moreKeys = listOf("-")),
+                    KeyDef("j", "J", flickUp = "+", moreKeys = listOf("+")),
+                    KeyDef("k", "K", flickUp = "(", moreKeys = listOf("(")),
+                    KeyDef("l", "L", flickUp = ")", moreKeys = listOf(")"))
+                ),
+                startPaddingWeight = 0.5f,
+                endPaddingWeight = 0.5f
+            ),
+            KeyRow(
+                listOf(
+                    // The shift slot becomes the Khipro signature key:
+                    // slicer (Classic) / fuser (Dark).
+                    KeyDef("/", widthWeight = 1.5f),
+                    KeyDef("z", "Z", flickUp = "*", moreKeys = listOf("ACTION_SELECT_ALL", "*")),
+                    KeyDef("x", "X", flickUp = "\"", moreKeys = listOf("ACTION_CUT", "\"")),
+                    KeyDef("c", "C", flickUp = "'", moreKeys = listOf("ACTION_COPY", "'")),
+                    KeyDef("v", "V", flickUp = ":", moreKeys = listOf("ACTION_PASTE", ":")),
+                    KeyDef("b", "B", flickUp = ";", moreKeys = listOf(";")),
+                    KeyDef("n", "N", flickUp = "!", moreKeys = listOf("!")),
+                    KeyDef("m", "M", flickUp = "?", moreKeys = listOf("?")),
+                    KeyDef(type = KeyType.DELETE, icon = "backspace", widthWeight = 1.5f)
+                )
+            ),
+            KeyRow(
+                listOf(
+                    KeyDef("?১২৩", type = KeyType.SYMBOLS, widthWeight = 1.5f, slidingInput = true),
+                    KeyDef(",", widthWeight = 1.0f, moreKeys = listOf("ACTION_SETTINGS", "ACTION_ONE_HANDED")),
+                    KeyDef(type = KeyType.SWITCH_LANGUAGE, icon = "globe", widthWeight = 1.0f),
+                    KeyDef(" ", type = KeyType.SPACE, icon = "space", widthWeight = 3.0f),
+                    KeyDef(";", widthWeight = 1.0f),
+                    KeyDef("।", widthWeight = 1.0f, moreKeysColumns = 9, moreKeys = listOf(".", ",", "?", "!", "#", ")", "(", "/", ";", "'", "@", ":", "-", "\"", "+", "%", "&")),
+                    KeyDef(type = KeyType.ACTION, icon = "enter", widthWeight = 1.5f, moreKeys = listOf("ACTION_EMOJI"))
+                )
+            )
+        )
+    )
+
+    val KhiproDark = KeyboardLayoutDef(
+        id = "bn_khipro_dark",
+        name = "ক্ষিপ্র ডার্ক",
+        displayName = "ক্ষিপ্র ডার্ক",
+        language = "bn",
+        rows = listOf(
+            KeyRow(
+                listOf(
+                    KeyDef("q", "Q", flickUp = "1", moreKeys = listOf("1")),
+                    KeyDef("w", "W", flickUp = "2", moreKeys = listOf("2")),
+                    KeyDef("e", "E", flickUp = "3", moreKeys = listOf("3")),
+                    KeyDef("r", "R", flickUp = "4", moreKeys = listOf("4")),
+                    KeyDef("t", "T", flickUp = "5", moreKeys = listOf("5")),
+                    KeyDef("y", "Y", flickUp = "6", moreKeys = listOf("`", "6")),
+                    KeyDef("u", "U", flickUp = "7", moreKeys = listOf("7")),
+                    KeyDef("i", "I", flickUp = "8", moreKeys = listOf("8")),
+                    KeyDef("o", "O", flickUp = "9", moreKeys = listOf("9")),
+                    KeyDef("p", "P", flickUp = "0", moreKeys = listOf("0"))
+                )
+            ),
+            KeyRow(
+                keys = listOf(
+                    KeyDef("a", "A", flickUp = "@", moreKeys = listOf("@")),
+                    KeyDef("s", "S", flickUp = "#", moreKeys = listOf("#")),
+                    KeyDef("d", "D", flickUp = "$", moreKeys = listOf("$")),
+                    KeyDef("f", "F", flickUp = "%", moreKeys = listOf("%")),
+                    KeyDef("g", "G", flickUp = "&", moreKeys = listOf("&")),
+                    KeyDef("h", "H", flickUp = "-", moreKeys = listOf("-")),
+                    KeyDef("j", "J", flickUp = "+", moreKeys = listOf("+")),
+                    KeyDef("k", "K", flickUp = "(", moreKeys = listOf("(")),
+                    KeyDef("l", "L", flickUp = ")", moreKeys = listOf(")"))
+                ),
+                startPaddingWeight = 0.5f,
+                endPaddingWeight = 0.5f
+            ),
+            KeyRow(
+                listOf(
+                    // The shift slot becomes the Khipro signature key:
+                    // slicer (Classic) / fuser (Dark).
+                    KeyDef("/", widthWeight = 1.5f),
+                    KeyDef("z", "Z", flickUp = "*", moreKeys = listOf("ACTION_SELECT_ALL", "*")),
+                    KeyDef("x", "X", flickUp = "\"", moreKeys = listOf("ACTION_CUT", "\"")),
+                    KeyDef("c", "C", flickUp = "'", moreKeys = listOf("ACTION_COPY", "'")),
+                    KeyDef("v", "V", flickUp = ":", moreKeys = listOf("ACTION_PASTE", ":")),
+                    KeyDef("b", "B", flickUp = ";", moreKeys = listOf(";")),
+                    KeyDef("n", "N", flickUp = "!", moreKeys = listOf("!")),
+                    KeyDef("m", "M", flickUp = "?", moreKeys = listOf("?")),
+                    KeyDef(type = KeyType.DELETE, icon = "backspace", widthWeight = 1.5f)
+                )
+            ),
+            KeyRow(
+                listOf(
+                    KeyDef("?১২৩", type = KeyType.SYMBOLS, widthWeight = 1.5f, slidingInput = true),
+                    KeyDef(",", widthWeight = 1.0f, moreKeys = listOf("ACTION_SETTINGS", "ACTION_ONE_HANDED")),
+                    KeyDef(type = KeyType.SWITCH_LANGUAGE, icon = "globe", widthWeight = 1.0f),
+                    KeyDef(" ", type = KeyType.SPACE, icon = "space", widthWeight = 3.0f),
+                    KeyDef(";", widthWeight = 1.0f),
+                    KeyDef("।", widthWeight = 1.0f, moreKeysColumns = 9, moreKeys = listOf(".", ",", "?", "!", "#", ")", "(", "/", ";", "'", "@", ":", "-", "\"", "+", "%", "&")),
+                    KeyDef(type = KeyType.ACTION, icon = "enter", widthWeight = 1.5f, moreKeys = listOf("ACTION_EMOJI"))
+                )
+            )
+        )
+    )
+
     val BengaliProbhat = KeyboardLayoutDef(
         id = "bn_probhat",
         name = "প্রভাত",
@@ -1076,7 +1204,16 @@ object PredefinedLayouts {
     }
 
     val allPredefined: List<KeyboardLayoutDef> by lazy {
-        listOf(EnglishQwerty, BengaliBorno, BengaliAvro, BengaliBornoEasy, BengaliNational, BengaliProbhat)
+        listOf(
+            EnglishQwerty,
+            BengaliBorno,
+            BengaliAvro,
+            BengaliBornoEasy,
+            BengaliNational,
+            BengaliProbhat,
+            KhiproClassic,
+            KhiproDark
+        )
     }
 
     fun fromId(id: String): KeyboardLayoutDef {
@@ -1085,6 +1222,8 @@ object PredefinedLayouts {
             "bn_borno" -> BengaliBorno
             "bn_avro" -> BengaliAvro
             "bn_probhat" -> BengaliProbhat
+            "bn_khipro_classic" -> KhiproClassic
+            "bn_khipro_dark" -> KhiproDark
             "bn_national" -> BengaliNational
             "symbols_1" -> Symbols
             "symbols_2" -> SymbolsMore
@@ -1106,6 +1245,8 @@ object PredefinedLayouts {
             "bn_borno" -> "বর্ণ ফোনেটিক"
             "bn_avro" -> "অভ্র"
             "bn_probhat" -> "প্রভাত"
+            "bn_khipro_classic" -> "ক্ষিপ্র ক্লাসিক"
+            "bn_khipro_dark" -> "ক্ষিপ্র ডার্ক"
             "bn_national" -> "জাতীয় (BSTI)"
             "ar_arabic" -> "Arabic"
             "en_qwerty" -> "English"

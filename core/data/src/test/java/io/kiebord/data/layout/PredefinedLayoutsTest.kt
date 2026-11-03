@@ -15,6 +15,8 @@ class PredefinedLayoutsTest {
         assertEquals("বর্ণ ফোনেটিক", PredefinedLayouts.displayName("bn_borno"))
         assertEquals("অভ্র", PredefinedLayouts.displayName("bn_avro"))
         assertEquals("প্রভাত", PredefinedLayouts.displayName("bn_probhat"))
+        assertEquals("ক্ষিপ্র ক্লাসিক", PredefinedLayouts.displayName("bn_khipro_classic"))
+        assertEquals("ক্ষিপ্র ডার্ক", PredefinedLayouts.displayName("bn_khipro_dark"))
         assertEquals("Arabic", PredefinedLayouts.displayName("ar_arabic"))
         assertEquals("বর্ণ ইজি", PredefinedLayouts.displayName("bn_easy"))
         assertEquals("বর্ণ ইজি", PredefinedLayouts.displayName("borno_easy"))
@@ -1092,5 +1094,76 @@ class PredefinedLayoutsTest {
         val rulesFile = rulesCandidates.firstOrNull { it.exists() }
         assertNotNull("bn-khipro.classic.mim must exist in assets/rules/", rulesFile)
         assertTrue("rules file must not be empty", rulesFile!!.length() > 0)
+    }
+
+    @Test
+    fun testKhiproLayoutsMirrorAvroVisualStructure() {
+        for (id in listOf("bn_khipro_classic", "bn_khipro_dark")) {
+            val khipro = PredefinedLayouts.fromId(id)
+            val avro = PredefinedLayouts.fromId("bn_avro")
+            assertEquals("same row count", avro.rows.size, khipro.rows.size)
+            // Rows 0-2 have same key count as Avro; Row 3 has 7 keys (extra ; key after space)
+            assertEquals("row 0 key count", avro.rows[0].keys.size, khipro.rows[0].keys.size)
+            assertEquals("row 1 key count", avro.rows[1].keys.size, khipro.rows[1].keys.size)
+            assertEquals("row 2 key count", avro.rows[2].keys.size, khipro.rows[2].keys.size)
+            assertEquals("row 3 key count", 7, khipro.rows[3].keys.size)
+            assertEquals("same row weight profile", avro.rows.map { it.startPaddingWeight to it.endPaddingWeight },
+                khipro.rows.map { it.startPaddingWeight to it.endPaddingWeight })
+
+            // Each row must sum to 10.0f total width
+            for (r in 0 until khipro.rows.size) {
+                val row = khipro.rows[r]
+                val keysSum = row.keys.map { it.widthWeight }.sum()
+                val totalWidth = keysSum + row.startPaddingWeight + row.endPaddingWeight
+                assertEquals("row $r total width weight", 10.0f, totalWidth, 0.001f)
+            }
+
+            // shift slot: row 2 first key is "/" with Avro's shift weight
+            val khiproShiftSlot = khipro.rows[2].keys.first()
+            assertEquals("/", khiproShiftSlot.label)
+            assertEquals(avro.rows[2].keys.first().widthWeight, khiproShiftSlot.widthWeight, 0.001f)
+
+            // letters match Avro (label, width, flickUp), but without any Bengali characters in moreKeys
+            val avroLetters = avro.rows.flatMap { it.keys }.filter { it.type == KeyType.CHARACTER && it.label?.length == 1 && it.label[0].isLetter() }
+            val khiproLetters = khipro.rows.flatMap { it.keys }.filter { it.type == KeyType.CHARACTER && it.label?.length == 1 && it.label[0].isLetter() }
+            assertEquals(avroLetters.map { it.label }, khiproLetters.map { it.label })
+            assertEquals(avroLetters.map { it.label to it.flickUp }, khiproLetters.map { it.label to it.flickUp })
+
+            val expectedMoreKeys = avroLetters.associate { key ->
+                val filtered = key.moreKeys.filterNot { s -> s.any { c -> c in '\u0980'..'\u09FF' } }
+                key.label to filtered
+            }
+            val actualMoreKeys = khiproLetters.associate { it.label to it.moreKeys }
+            assertEquals(expectedMoreKeys, actualMoreKeys)
+
+            // Explicitly verify NO popup contains any Bengali characters (\u0980..\u09FF)
+            for (row in khipro.rows) {
+                for (key in row.keys) {
+                    for (popup in key.moreKeys) {
+                        org.junit.Assert.assertFalse(
+                            "Popup '$popup' on key '${key.label}' should not contain Bengali characters",
+                            popup.any { it in '\u0980'..'\u09FF' }
+                        )
+                    }
+                }
+            }
+
+            // bottom row: ; sits after SPACE, before ।
+            val bottom = khipro.rows[3].keys
+            val spaceIdx = bottom.indexOfFirst { it.type == KeyType.SPACE }
+            assertEquals(";", bottom[spaceIdx + 1].label)
+            assertEquals("।", bottom[spaceIdx + 2].label)
+
+            // DELETE / ACTION / SYMBOLS weights match Avro
+            assertEquals(avro.rows[2].keys.last().widthWeight, khipro.rows[2].keys.last().widthWeight, 0.001f)
+            assertEquals(avro.rows[3].keys.last().widthWeight, khipro.rows[3].keys.last().widthWeight, 0.001f)
+            assertEquals(avro.rows[3].keys.first().widthWeight, khipro.rows[3].keys.first().widthWeight, 0.001f)
+        }
+        assertEquals("ক্ষিপ্র ক্লাসিক", PredefinedLayouts.fromId("bn_khipro_classic").displayName)
+        assertEquals("ক্ষিপ্র ডার্ক", PredefinedLayouts.fromId("bn_khipro_dark").displayName)
+        assertTrue(PredefinedLayouts.allPredefined.contains(PredefinedLayouts.KhiproClassic))
+        assertTrue(PredefinedLayouts.allPredefined.contains(PredefinedLayouts.KhiproDark))
+        assertEquals("ক্ষিপ্র ক্লাসিক", PredefinedLayouts.displayName("bn_khipro_classic"))
+        assertEquals("ক্ষিপ্র ডার্ক", PredefinedLayouts.displayName("bn_khipro_dark"))
     }
 }
