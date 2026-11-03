@@ -4,6 +4,7 @@ use jni::JNIEnv;
 
 pub mod dictionary;
 pub mod gesture;
+pub mod khipro;
 pub mod m17n;
 pub mod spatial;
 pub mod translit;
@@ -431,3 +432,107 @@ pub extern "system" fn Java_io_kiebord_feature_ime_NativeEngine_ping(
     1
 }
 
+
+// ---- Khipro (m17n spec interpreter) ----
+
+fn khipro_variant(v: jint) -> khipro::Variant {
+    if v == khipro::Variant::Dark as jint {
+        khipro::Variant::Dark
+    } else {
+        khipro::Variant::Classic
+    }
+}
+
+#[no_mangle]
+pub extern "system" fn Java_io_kiebord_feature_ime_NativeEngine_khiproLoadSpec(
+    mut env: JNIEnv,
+    _class: JClass,
+    variant: jint,
+    mim_text: JString,
+) -> jboolean {
+    let mim: String = match env.get_string(&mim_text) {
+        Ok(s) => s.into(),
+        Err(_) => return 0,
+    };
+    match khipro::load_spec(khipro_variant(variant), &mim) {
+        Ok(()) => 1,
+        Err(_) => 0,
+    }
+}
+
+#[no_mangle]
+pub extern "system" fn Java_io_kiebord_feature_ime_NativeEngine_khiproConvert(
+    mut env: JNIEnv,
+    _class: JClass,
+    variant: jint,
+    buffer: JString,
+) -> jstring {
+    let buffer: String = match env.get_string(&buffer) {
+        Ok(s) => s.into(),
+        Err(_) => return env.new_string("").unwrap().into_raw(),
+    };
+    let result = khipro::convert(khipro_variant(variant), &buffer);
+    env.new_string(result).unwrap().into_raw()
+}
+
+#[no_mangle]
+pub extern "system" fn Java_io_kiebord_feature_ime_NativeEngine_khiproLoaded(
+    _env: JNIEnv,
+    _class: JClass,
+    variant: jint,
+) -> jboolean {
+    if khipro::is_loaded(khipro_variant(variant)) { 1 } else { 0 }
+}
+
+#[no_mangle]
+pub extern "system" fn Java_io_kiebord_feature_ime_NativeEngine_khiproReset(
+    _env: JNIEnv,
+    _class: JClass,
+    variant: jint,
+) {
+    khipro::reset(khipro_variant(variant));
+}
+
+/// OTA gate: replays `tsv_text` through a scratch engine built from
+/// `mim_text`. Returns "" when only known-gap rows differ, else a report of
+/// the first unexpected failures. Never touches the live registry.
+#[no_mangle]
+pub extern "system" fn Java_io_kiebord_feature_ime_NativeEngine_khiproValidateSpec(
+    mut env: JNIEnv,
+    _class: JClass,
+    variant: jint,
+    mim_text: JString,
+    tsv_text: JString,
+) -> jstring {
+    let _ = variant; // the scratch engine carries its own spec; kept for API symmetry
+    let mim: String = match env.get_string(&mim_text) {
+        Ok(s) => s.into(),
+        Err(_) => return env.new_string("unreadable mim").unwrap().into_raw(),
+    };
+    let tsv: String = match env.get_string(&tsv_text) {
+        Ok(s) => s.into(),
+        Err(_) => return env.new_string("unreadable tsv").unwrap().into_raw(),
+    };
+    let report = match khipro::conformance::run_tsv_detailed(&mim, &tsv) {
+        Ok(failures) => {
+            let unexpected: Vec<_> = failures
+                .iter()
+                .filter(|f| !khipro::conformance::KNOWN_GAP_INPUTS.contains(&f.input.as_str()))
+                .collect();
+            if unexpected.is_empty() {
+                String::new()
+            } else {
+                let f = &unexpected[0];
+                format!(
+                    "{} failed: first input={:?} expected={:?} got={:?}",
+                    unexpected.len(),
+                    f.input,
+                    f.expected,
+                    f.got
+                )
+            }
+        }
+        Err(e) => e,
+    };
+    env.new_string(report).unwrap().into_raw()
+}

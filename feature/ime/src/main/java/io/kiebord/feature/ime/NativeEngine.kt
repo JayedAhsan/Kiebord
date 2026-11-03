@@ -1,5 +1,7 @@
 package io.kiebord.feature.ime
 
+import io.kiebord.feature.ime.khipro.KhiproVariant
+
 object NativeEngine {
 
     private var isLoaded = false
@@ -79,6 +81,37 @@ object NativeEngine {
         lang: String,
         maxResults: Int
     ): String
+
+    // ---- Khipro (m17n spec interpreter) ----
+
+    @JvmStatic
+    external fun khiproLoadSpec(variant: Int, mimText: String): Boolean
+
+    @JvmStatic
+    external fun khiproConvert(variant: Int, buffer: String): String
+
+    @JvmStatic
+    external fun khiproLoaded(variant: Int): Boolean
+
+    @JvmStatic
+    external fun khiproReset(variant: Int)
+
+    /** "" when the spec passes the conformance gate, else a failure report. */
+    @JvmStatic
+    external fun khiproValidateSpec(variant: Int, mimText: String, tsvText: String): String
+
+    fun loadKhiproSpec(variant: KhiproVariant, mim: String): Boolean =
+        khiproLoadSpec(variant.id, mim)
+
+    fun convertKhipro(variant: KhiproVariant, buffer: String): String =
+        khiproConvert(variant.id, buffer)
+
+    fun khiproSpecLoaded(variant: KhiproVariant): Boolean = khiproLoaded(variant.id)
+
+    fun resetKhipro(variant: KhiproVariant) = khiproReset(variant.id)
+
+    fun validateKhiproSpec(variant: KhiproVariant, mim: String, tsv: String): String =
+        khiproValidateSpec(variant.id, mim, tsv)
 
     fun queryGesture(
         points: List<androidx.compose.ui.geometry.Offset>,

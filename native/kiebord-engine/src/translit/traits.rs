@@ -22,6 +22,8 @@ pub fn get_phonetic_transliterator(layout_id: &str) -> Option<&'static (dyn Phon
     match layout_id {
         "bn_borno" => Some(crate::translit::borno_phonetic::get_borno_transliterator()),
         "bn_avro" => Some(crate::translit::borno_phonetic::get_avro_transliterator()),
+        "bn_khipro_classic" => Some(crate::translit::khipro::get_classic()),
+        "bn_khipro_dark" => Some(crate::translit::khipro::get_dark()),
         _ => None,
     }
 }
