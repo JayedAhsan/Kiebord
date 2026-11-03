@@ -149,6 +149,7 @@ class KiebordService : InputMethodService() {
     }
     private lateinit var userDictionaryRepo: UserDictionaryRepository
     private lateinit var layoutRepo: LayoutRepository
+    private lateinit var khiproSpecs: io.kiebord.feature.ime.khipro.KhiproSpecRepository
     private var selectionAnchor: Int? = null
     private var selectionCursor: Int? = null
     private var inputSessionId by mutableIntStateOf(0)
@@ -214,6 +215,29 @@ class KiebordService : InputMethodService() {
         layoutRepo = LayoutRepository.getInstance(this)
         clipboardManager = SandboxedClipboardManager.getInstance(this)
         userDictionaryRepo = UserDictionaryRepository.getInstance(this)
+        khiproSpecs = io.kiebord.feature.ime.khipro.KhiproSpecRepository(
+            assetReader = ::readKhiproAsset,
+            filesDir = filesDir,
+            loadPref = { key, def ->
+                try {
+                    getSharedPreferences("kiebord_runtime", Context.MODE_PRIVATE)
+                        .getString(key, def)
+                } catch (_: Exception) { def }
+            },
+            storePref = { key, value ->
+                try {
+                    getSharedPreferences("kiebord_runtime", Context.MODE_PRIVATE)
+                        .edit().putString(key, value).apply()
+                } catch (_: Exception) {}
+            },
+            removePref = { key ->
+                try {
+                    getSharedPreferences("kiebord_runtime", Context.MODE_PRIVATE)
+                        .edit().remove(key).apply()
+                } catch (_: Exception) {}
+            },
+            fetcher = { url -> io.kiebord.feature.ime.khipro.KhiproSpecRepository.defaultFetcher(url) },
+        )
         voiceInputManager = VoiceInputManager(this).apply {
             onPartialResult = { text ->
                 currentInputConnection?.setComposingText(text, 1)
@@ -844,7 +868,14 @@ class KiebordService : InputMethodService() {
 
                 when {
                     isTransliterationLayout() -> {
-                        if (isTransliterableChar(text) || isBengaliOrModifier(text)) {
+                        if (activeLayout.id in io.kiebord.feature.ime.khipro.KHIPRO_LAYOUT_IDS) {
+                            khiproSpecs.ensureLoaded(khiproVariantFor(activeLayout.id))
+                        }
+                        if (
+                            isTransliterableChar(text) || isBengaliOrModifier(text) ||
+                            (activeLayout.id in io.kiebord.feature.ime.khipro.KHIPRO_LAYOUT_IDS &&
+                                text.length == 1 && text[0] in io.kiebord.feature.ime.khipro.KHIPRO_BUFFER_KEYS)
+                        ) {
                             getTransliterationManager().handleCharacter(text)
                         } else {
                             val translitMgr = getTransliterationManager()
@@ -1352,6 +1383,18 @@ class KiebordService : InputMethodService() {
         // 5. Normal continuous deletion
         ic.deleteSurroundingText(1, 0)
         updateSuggestions()
+    }
+
+    private fun khiproVariantFor(layoutId: String): io.kiebord.feature.ime.khipro.KhiproVariant =
+        if (layoutId == "bn_khipro_dark") io.kiebord.feature.ime.khipro.KhiproVariant.DARK
+        else io.kiebord.feature.ime.khipro.KhiproVariant.CLASSIC
+
+    private fun readKhiproAsset(path: String): String? {
+        return try {
+            assets.open(path).bufferedReader().use { it.readText() }
+        } catch (_: Exception) {
+            null
+        }
     }
 
     private fun isTransliterableChar(text: String): Boolean {
@@ -2322,6 +2365,26 @@ class KiebordService : InputMethodService() {
                 } else ""
 
                 val list = mutableListOf<SuggestionCandidate>()
+
+                // Khipro layouts: roman-first deterministic candidates.
+                if (activeLayout.id in io.kiebord.feature.ime.khipro.KHIPRO_LAYOUT_IDS) {
+                    val completions = if (primaryWord.isNotEmpty()) {
+                        NativeEngine.querySuggestions(primaryWord, "bn_exact", 8)
+                            .filter { it != primaryWord && !containsLatinText(it) }
+                    } else emptyList()
+                    val learned = if (preferencesState.learnedWordsEnabled && primaryWord.isNotEmpty()) {
+                        userDictionaryRepo.getCompletions(primaryWord, 5) { w -> !containsLatinText(w) }
+                    } else emptyList()
+                    val candidates = io.kiebord.feature.ime.khipro.buildKhiproCandidates(
+                        raw, primaryWord, completions, learned,
+                    )
+                    activeSuggestions = filterAndMarkCandidates(
+                        candidates.map { c ->
+                            SuggestionCandidate(text = c, isPrimary = c == primaryWord, rawInput = raw)
+                        },
+                    )
+                    return
+                }
 
                 // 1. Raw typed English word as first candidate if toggle is enabled
                 if (preferencesState.bengaliShowRawInputCandidate && raw.isNotBlank()) {

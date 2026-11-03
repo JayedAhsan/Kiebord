@@ -211,7 +211,8 @@ object TransliterationManagerFactory {
             phoneticLayoutCache[layoutId] = res
             res
         } else {
-            layoutId == "bn_borno" || layoutId == "bn_avro"
+            layoutId == "bn_borno" || layoutId == "bn_avro" ||
+                layoutId in io.kiebord.feature.ime.khipro.KHIPRO_LAYOUT_IDS
         }
     }
 
