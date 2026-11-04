@@ -1,0 +1,71 @@
+{
+  "id": "bn_unijoy",
+  "name": "Unijoy",
+  "language": "bn",
+  "rows": [
+    {
+      "keys": [
+        { "label": "ঙ", "shiftedLabel": "ং", "flickUp": "ং", "moreKeys": ["ং"], "shiftedMoreKeys": [] },
+        { "label": "য", "shiftedLabel": "য়", "flickUp": "য়", "moreKeys": ["য়"], "shiftedMoreKeys": [] },
+        { "label": "ড", "shiftedLabel": "ঢ", "flickUp": "ঢ", "moreKeys": ["ঢ"], "shiftedMoreKeys": [] },
+        { "label": "প", "shiftedLabel": "ফ", "flickUp": "ফ", "moreKeys": ["ফ"], "shiftedMoreKeys": [] },
+        { "label": "ট", "shiftedLabel": "ঠ", "flickUp": "ঠ", "moreKeys": ["ঠ"], "shiftedMoreKeys": [] },
+        { "label": "চ", "shiftedLabel": "ছ", "flickUp": "ছ", "moreKeys": ["ছ"], "shiftedMoreKeys": [] },
+        { "label": "জ", "shiftedLabel": "ঝ", "flickUp": "ঝ", "moreKeys": ["ঝ"], "shiftedMoreKeys": [] },
+        { "label": "হ", "shiftedLabel": "ঞ", "flickUp": "ঞ", "moreKeys": ["ঞ"], "shiftedMoreKeys": [] },
+        { "label": "গ", "shiftedLabel": "ঘ", "flickUp": "ঘ", "moreKeys": ["ঘ"], "shiftedMoreKeys": [] },
+        { "label": "ড়", "shiftedLabel": "ঢ়", "flickUp": "ঢ়", "moreKeys": ["ঢ়"], "shiftedMoreKeys": [] }
+      ]
+    },
+    {
+      "startPaddingWeight": 0.5,
+      "endPaddingWeight": 0.5,
+      "keys": [
+        { "label": "ৃ", "shiftedLabel": "ঃ", "flickUp": "ঋ", "moreKeys": ["ঋ"], "shiftedMoreKeys": [] },
+        { "label": "ু", "shiftedLabel": "ূ", "flickUp": "উ", "moreKeys": ["উ"], "shiftedFlickUp": "ঊ", "shiftedMoreKeys": ["ঊ"] },
+        { "label": "ি", "shiftedLabel": "ী", "flickUp": "ই", "moreKeys": ["ই"], "shiftedFlickUp": "ঈ", "shiftedMoreKeys": ["ঈ"] },
+        { "label": "া", "shiftedLabel": "অ", "flickUp": "আ", "moreKeys": ["আ", "অ"], "shiftedMoreKeys": [] },
+        {
+          "label": "্",
+          "shiftedLabel": "ঁ",
+          "flickUp": "ঁ",
+          "moreKeys": ["ঁ"],
+          "shiftedFlickUp": "…",
+          "shiftedMoreKeys": ["়", "ৄ", "ঽ", "ৢ", "ৱ", "ৣ", "ৗ", "ৠ", "৺", "ঌ", "ৰ", "ৡ"]
+        },
+        { "label": "ব", "shiftedLabel": "ভ", "flickUp": "ভ", "moreKeys": ["ভ"], "shiftedMoreKeys": [] },
+        { "label": "ক", "shiftedLabel": "খ", "flickUp": "খ", "moreKeys": ["খ"], "shiftedMoreKeys": [] },
+        { "label": "ত", "shiftedLabel": "থ", "flickUp": "থ", "moreKeys": ["থ", "ৎ"], "shiftedMoreKeys": [] },
+        { "label": "দ", "shiftedLabel": "ধ", "flickUp": "ধ", "moreKeys": ["ধ"], "shiftedMoreKeys": [] }
+      ]
+    },
+    {
+      "keys": [
+        { "type": "SHIFT", "icon": "shift", "widthWeight": 1.5 },
+        { "label": "্র", "shiftedLabel": "্য", "flickUp": "্য", "moreKeys": ["্য"], "shiftedMoreKeys": [] },
+        { "label": "ো", "shiftedLabel": "ৌ", "flickUp": "ও", "moreKeys": ["ও"], "shiftedFlickUp": "ঔ", "shiftedMoreKeys": ["ঔ"] },
+        { "label": "ে", "shiftedLabel": "ৈ", "flickUp": "এ", "moreKeys": ["এ"], "shiftedFlickUp": "ঐ", "shiftedMoreKeys": ["ঐ"] },
+        { "label": "র", "shiftedLabel": "ল", "flickUp": "ল", "moreKeys": ["ল", "র‍্য"], "shiftedMoreKeys": [] },
+        { "label": "ন", "shiftedLabel": "ণ", "flickUp": "ণ", "moreKeys": ["ণ"], "shiftedMoreKeys": [] },
+        { "label": "স", "shiftedLabel": "ষ", "flickUp": "ষ", "moreKeys": ["ষ"], "shiftedMoreKeys": [] },
+        { "label": "ম", "shiftedLabel": "শ", "flickUp": "শ", "moreKeys": ["শ"], "shiftedMoreKeys": [] },
+        { "type": "DELETE", "icon": "backspace", "widthWeight": 1.5 }
+      ]
+    },
+    {
+      "keys": [
+        { "label": "?123", "type": "SYMBOLS", "widthWeight": 1.5, "slidingInput": true },
+        { "label": ",", "widthWeight": 1.0, "moreKeys": ["ACTION_SETTINGS", "ACTION_ONE_HANDED"] },
+        { "type": "SWITCH_LANGUAGE", "icon": "globe", "widthWeight": 1.0 },
+        { "label": " ", "type": "SPACE", "icon": "space", "widthWeight": 4.0 },
+        {
+          "label": "।",
+          "widthWeight": 1.0,
+          "moreKeysColumns": 9,
+          "moreKeys": ["॥", ".", ",", "?", "!", "#", ")", "(", "/", ";", "'", "@", ":", "-", "\"", "+", "%", "&"]
+        },
+        { "type": "ACTION", "icon": "enter", "widthWeight": 1.5, "moreKeys": ["ACTION_EMOJI"] }
+      ]
+    }
+  ]
+}
