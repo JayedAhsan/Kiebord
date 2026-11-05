@@ -1705,7 +1705,15 @@ fun KeyboardRootView(
                                             "ZWJ" -> "\u200D"
                                             else -> selectedChar
                                         }
-                                        handleKeyTapUnified(KeyDef(label = selectedChar, commitText = charToCommit, type = KeyType.CHARACTER))
+                                        handleKeyTapUnified(
+                                            KeyDef(
+                                                label = selectedChar,
+                                                shiftedLabel = selectedChar,
+                                                commitText = charToCommit,
+                                                shiftedCommitText = charToCommit,
+                                                type = KeyType.CHARACTER
+                                            )
+                                        )
                                     }
                                 }
                             }

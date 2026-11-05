@@ -181,6 +181,65 @@ pub fn get_or_build_phonetic_index(
 
 pub struct GestureDecoder;
 
+#[inline]
+fn char_lower(c: char) -> char {
+    match c {
+        'İ' => 'i',
+        'I' => 'i',
+        'Ğ' => 'ğ',
+        'Ü' => 'ü',
+        'Ş' => 'ş',
+        'Ö' => 'ö',
+        'Ç' => 'ç',
+        'Â' => 'â',
+        'Î' => 'î',
+        'Û' => 'û',
+        other => other.to_ascii_lowercase(),
+    }
+}
+
+#[inline]
+fn base_latin_fallback(c: char) -> Option<char> {
+    match char_lower(c) {
+        'ğ' => Some('g'),
+        'ü' => Some('u'),
+        'ş' => Some('s'),
+        'ı' => Some('i'),
+        'ö' => Some('o'),
+        'ç' => Some('c'),
+        'â' => Some('a'),
+        'î' => Some('i'),
+        'û' => Some('u'),
+        _ => None,
+    }
+}
+
+#[inline]
+fn lookup_key_pos(key_map: &HashMap<char, (f32, f32)>, c: char) -> Option<(f32, f32)> {
+    let lower = char_lower(c);
+    if let Some(&pos) = key_map.get(&lower) {
+        return Some(pos);
+    }
+    if let Some(base) = base_latin_fallback(lower) {
+        if let Some(&pos) = key_map.get(&base) {
+            return Some(pos);
+        }
+    }
+    None
+}
+
+#[inline]
+fn in_key_set(set: &HashSet<char>, key_map: &HashMap<char, (f32, f32)>, c: char) -> bool {
+    let lower = char_lower(c);
+    if key_map.contains_key(&lower) {
+        return set.contains(&lower);
+    }
+    if let Some(base) = base_latin_fallback(lower) {
+        return set.contains(&base);
+    }
+    false
+}
+
 impl GestureDecoder {
     /// Resamples an arbitrary length touch trajectory polyline into exactly `target_count` equidistant points
     pub fn resample_polyline(points: &[GesturePoint], target_count: usize) -> Vec<GesturePoint> {
@@ -288,7 +347,7 @@ impl GestureDecoder {
         let mut key_map: HashMap<char, (f32, f32)> = HashMap::with_capacity(keys.len());
         let mut valid_keys: HashSet<char> = HashSet::with_capacity(keys.len());
         for k in keys {
-            let lower = k.char_code.to_ascii_lowercase();
+            let lower = char_lower(k.char_code);
             key_map.insert(lower, (k.x, k.y));
             let mut min_d = f32::MAX;
             for u_pt in &user_path {
@@ -314,7 +373,7 @@ impl GestureDecoder {
                 let dy = k.y - start_pt.y;
                 dx * dx + dy * dy <= start_radius * start_radius
             })
-            .map(|k| k.char_code.to_ascii_lowercase())
+            .map(|k| char_lower(k.char_code))
             .filter(|c| valid_keys.contains(c))
             .collect();
 
@@ -325,7 +384,7 @@ impl GestureDecoder {
                 let dy = k.y - end_pt.y;
                 dx * dx + dy * dy <= end_radius * end_radius
             })
-            .map(|k| k.char_code.to_ascii_lowercase())
+            .map(|k| char_lower(k.char_code))
             .filter(|c| valid_keys.contains(c))
             .collect();
 
@@ -339,16 +398,52 @@ impl GestureDecoder {
         let mut resampled_buf: Vec<GesturePoint> = Vec::with_capacity(sample_count);
 
         for &start_ch in &start_keys {
-            let mut start_targets = [start_ch as u16, 0];
-            let target_len = if start_ch.is_ascii_lowercase() {
-                start_targets[1] = start_ch.to_ascii_uppercase() as u16;
-                2
-            } else if start_ch.is_ascii_uppercase() {
-                start_targets[1] = start_ch.to_ascii_lowercase() as u16;
-                2
+            let mut start_targets = [0u16; 6];
+            let mut target_len = 0usize;
+            start_targets[target_len] = start_ch as u16;
+            target_len += 1;
+
+            if start_ch.is_ascii_lowercase() {
+                start_targets[target_len] = start_ch.to_ascii_uppercase() as u16;
+                target_len += 1;
+                if start_ch == 'i' {
+                    start_targets[target_len] = 'İ' as u16;
+                    target_len += 1;
+                }
+                // On Compact Turkish Q (10-key), diacritic keys are not separate centroids,
+                // so allow base keys to also seed words starting with their Turkish diacritics.
+                let compact_diacritic = match start_ch {
+                    'c' => Some(('ç', 'Ç')),
+                    'g' => Some(('ğ', 'Ğ')),
+                    'i' => Some(('ı', 'I')),
+                    'o' => Some(('ö', 'Ö')),
+                    's' => Some(('ş', 'Ş')),
+                    'u' => Some(('ü', 'Ü')),
+                    _ => None,
+                };
+                if let Some((d_low, d_up)) = compact_diacritic {
+                    if !key_map.contains_key(&d_low) {
+                        start_targets[target_len] = d_low as u16;
+                        target_len += 1;
+                        start_targets[target_len] = d_up as u16;
+                        target_len += 1;
+                    }
+                }
             } else {
-                1
-            };
+                let up_opt = match start_ch {
+                    'ı' => Some('I'),
+                    'ğ' => Some('Ğ'),
+                    'ü' => Some('Ü'),
+                    'ş' => Some('Ş'),
+                    'ö' => Some('Ö'),
+                    'ç' => Some('Ç'),
+                    _ => None,
+                };
+                if let Some(up_ch) = up_opt {
+                    start_targets[target_len] = up_ch as u16;
+                    target_len += 1;
+                }
+            }
             for &st in &start_targets[..target_len] {
                 if let Some(start_node) = dict.child(0, st) {
                     word_buffer.clear();
@@ -514,7 +609,7 @@ impl GestureDecoder {
             if ch == '\'' || ch == '\u{2019}' {
                 continue;
             }
-            if let Some(&pos) = key_map.get(&ch.to_ascii_lowercase()) {
+            if let Some(pos) = lookup_key_pos(key_map, ch) {
                 ideal_pts.push(GesturePoint {
                     x: pos.0,
                     y: pos.1,
@@ -774,7 +869,7 @@ impl GestureDecoder {
             if ch == '\'' || ch == '\u{2019}' {
                 continue;
             }
-            if let Some(&pos) = key_map.get(&ch.to_ascii_lowercase()) {
+            if let Some(pos) = lookup_key_pos(key_map, ch) {
                 ideal_pts.push(GesturePoint {
                     x: pos.0,
                     y: pos.1,
@@ -901,7 +996,7 @@ impl GestureDecoder {
         if dict.is_word(node) && buffer.len() >= 2 {
             let last_u16 = *buffer.last().unwrap();
             if let Some(last_ch) = char::from_u32(last_u16 as u32) {
-                if end_keys.contains(&last_ch.to_ascii_lowercase()) {
+                if in_key_set(end_keys, key_map, last_ch) {
                     let freq = dict.freq(node);
                     if freq >= 1 {
                         ideal_pts_buf.clear();
@@ -914,7 +1009,7 @@ impl GestureDecoder {
                                 if ch == '\'' || ch == '\u{2019}' {
                                     continue;
                                 }
-                                if let Some(&pos) = key_map.get(&ch.to_ascii_lowercase()) {
+                                if let Some(pos) = lookup_key_pos(key_map, ch) {
                                     let mut min_d = f32::MAX;
                                     for u_pt in user_path {
                                         let dx = u_pt.x - pos.0;
@@ -974,7 +1069,7 @@ impl GestureDecoder {
                 Some(c) => c,
                 None => continue,
             };
-            if ch != '\'' && ch != '\u{2019}' && !valid_keys.contains(&ch.to_ascii_lowercase()) {
+            if ch != '\'' && ch != '\u{2019}' && !in_key_set(valid_keys, key_map, ch) {
                 continue;
             }
             let child_node = (e + 1) as u32;

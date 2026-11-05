@@ -177,6 +177,35 @@ fun KeyboardLayoutsScreen(
         )
     }
 
+    var turkishQLayout by remember {
+        mutableStateOf(
+            layoutRepo.getCachedLayout(KiebordPreferences.LAYOUT_TR_Q)
+                ?: PredefinedLayouts.fromId(KiebordPreferences.LAYOUT_TR_Q)
+        )
+    }
+    var turkishCompactLayout by remember {
+        mutableStateOf(
+            layoutRepo.getCachedLayout(KiebordPreferences.LAYOUT_TR_Q_COMPACT)
+                ?: PredefinedLayouts.fromId(KiebordPreferences.LAYOUT_TR_Q_COMPACT)
+        )
+    }
+    val turkishCards = remember(turkishQLayout, turkishCompactLayout) {
+        listOf(
+            LayoutCardData(
+                id = KiebordPreferences.LAYOUT_TR_Q,
+                name = turkishQLayout.displayName ?: "Türkçe (Q)",
+                description = turkishQLayout.description ?: "Full 12-key Turkish Q layout with dedicated ğ, ü, ş, ı, ö, ç keys",
+                layoutDef = turkishQLayout
+            ),
+            LayoutCardData(
+                id = KiebordPreferences.LAYOUT_TR_Q_COMPACT,
+                name = turkishCompactLayout.displayName ?: "Türkçe (Compact)",
+                description = turkishCompactLayout.description ?: "Compact 10-key QWERTY layout with Turkish characters on long-press and flick-up",
+                layoutDef = turkishCompactLayout
+            )
+        )
+    }
+
     var availableMeta by remember {
         mutableStateOf(layoutRepo.getCachedAvailableLayouts() ?: emptyList())
     }
@@ -185,10 +214,18 @@ fun KeyboardLayoutsScreen(
         val loadedArabic = withContext(Dispatchers.IO) {
             layoutRepo.getLayout(KiebordPreferences.LAYOUT_AR_ARABIC)
         }
+        val loadedTrQ = withContext(Dispatchers.IO) {
+            layoutRepo.getLayout(KiebordPreferences.LAYOUT_TR_Q)
+        }
+        val loadedTrCompact = withContext(Dispatchers.IO) {
+            layoutRepo.getLayout(KiebordPreferences.LAYOUT_TR_Q_COMPACT)
+        }
         val loadedMeta = withContext(Dispatchers.IO) {
             layoutRepo.getAvailableLayouts()
         }
         arabicLayout = loadedArabic
+        turkishQLayout = loadedTrQ
+        turkishCompactLayout = loadedTrCompact
         availableMeta = loadedMeta
     }
 
@@ -233,8 +270,8 @@ fun KeyboardLayoutsScreen(
         defaultBanglaCards + extraBanglaCards
     }
 
-    val curatedIds = remember(englishCards, banglaCards, arabicCard) {
-        (englishCards.map { it.id } + banglaCards.map { it.id } + listOf(arabicCard.id)).toSet()
+    val curatedIds = remember(englishCards, banglaCards, turkishCards, arabicCard) {
+        (englishCards.map { it.id } + banglaCards.map { it.id } + turkishCards.map { it.id } + listOf(arabicCard.id)).toSet()
     }
     val otherBundledMeta = remember(availableMeta, curatedIds) {
         availableMeta.filter { !it.isCustom && it.id !in curatedIds && !it.id.contains("symbols") }
@@ -275,8 +312,8 @@ fun KeyboardLayoutsScreen(
         customCards = cards
     }
 
-    val allKnownCards = remember(englishCards, banglaCards, arabicCard, otherBundledCards, customCards) {
-        englishCards + banglaCards + listOf(arabicCard) + otherBundledCards + customCards
+    val allKnownCards = remember(englishCards, banglaCards, turkishCards, arabicCard, otherBundledCards, customCards) {
+        englishCards + banglaCards + turkishCards + listOf(arabicCard) + otherBundledCards + customCards
     }
     var orderedActiveIds by remember(preferences.enabledLayoutIds) {
         mutableStateOf(preferences.enabledLayoutIds.toList())
@@ -301,6 +338,8 @@ fun KeyboardLayoutsScreen(
 
     var isEnglishExpanded by remember { mutableStateOf(false) }
     var isBanglaExpanded by remember { mutableStateOf(false) }
+    var isTurkishExpanded by remember { mutableStateOf(false) }
+    var selectedTurkishSettingsId by remember { mutableStateOf<String?>(null) }
     var isArabicExpanded by remember { mutableStateOf(false) }
     var isArabicOptionsOpen by remember { mutableStateOf(false) }
     var selectedCustomSettingsId by remember { mutableStateOf<String?>(null) }
@@ -676,7 +715,114 @@ fun KeyboardLayoutsScreen(
                 }
             }
 
-            // 3. Arabic Item
+            // 3. Turkish Item with Horizontal Carousel (Türkçe Q & Compact)
+            SettingsItemCard(
+                position = GroupPosition.MIDDLE,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column {
+                    LanguageSectionHeader(
+                        title = "Turkish (Türkçe)",
+                        subtitle = turkishCards.joinToString(", ") { it.name },
+                        isExpanded = isTurkishExpanded,
+                        onToggleExpand = { isTurkishExpanded = !isTurkishExpanded }
+                    )
+
+                    AnimatedVisibility(
+                        visible = isTurkishExpanded,
+                        enter = expandVertically() + fadeIn(),
+                        exit = shrinkVertically() + fadeOut()
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 18.dp, top = 4.dp)
+                        ) {
+                            LazyRow(
+                                modifier = Modifier.fillMaxWidth(),
+                                contentPadding = PaddingValues(horizontal = 16.dp),
+                                horizontalArrangement = Arrangement.spacedBy(14.dp)
+                            ) {
+                                items(
+                                    items = turkishCards,
+                                    key = { it.id }
+                                ) { cardData ->
+                                    val isEnabled = preferences.enabledLayoutIds.contains(cardData.id)
+                                    val hasExtraRows = cardData.layoutDef.extraRows.isNotEmpty()
+                                    val isCardSettingsOpen = selectedTurkishSettingsId == cardData.id
+
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        KeyboardLayoutPreviewItem(
+                                            cardData = cardData,
+                                            preferences = preferences,
+                                            isEnabled = isEnabled,
+                                            isPrimary = preferences.primaryLayoutId == cardData.id && isEnabled,
+                                            onToggle = { handleToggleLayout(cardData) }
+                                        )
+
+                                        if (hasExtraRows) {
+                                            Spacer(modifier = Modifier.height(8.dp))
+                                            Row(
+                                                modifier = Modifier
+                                                    .clip(CircleShape)
+                                                    .background(
+                                                        if (isCardSettingsOpen) colors.accent.copy(alpha = 0.15f)
+                                                        else colors.iconBackground
+                                                    )
+                                                    .clickable {
+                                                        selectedTurkishSettingsId =
+                                                            if (isCardSettingsOpen) null else cardData.id
+                                                    }
+                                                    .padding(horizontal = 10.dp, vertical = 6.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Filled.Settings,
+                                                    contentDescription = "Options",
+                                                    tint = if (isCardSettingsOpen) colors.accent else colors.textSecondary,
+                                                    modifier = Modifier.size(14.dp)
+                                                )
+                                                Spacer(modifier = Modifier.width(4.dp))
+                                                Text(
+                                                    text = "Options",
+                                                    fontSize = 11.sp,
+                                                    fontWeight = FontWeight.Medium,
+                                                    color = if (isCardSettingsOpen) colors.accent else colors.textSecondary
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            val activeTurkishSettingsCard = turkishCards.find { it.id == selectedTurkishSettingsId }
+                            AnimatedVisibility(
+                                visible = activeTurkishSettingsCard != null && activeTurkishSettingsCard.layoutDef.extraRows.isNotEmpty(),
+                                enter = expandVertically() + fadeIn(),
+                                exit = shrinkVertically() + fadeOut()
+                            ) {
+                                if (activeTurkishSettingsCard != null) {
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(start = 16.dp, end = 16.dp, top = 12.dp)
+                                    ) {
+                                        ExtraRowsOptionsSection(
+                                            cardData = activeTurkishSettingsCard,
+                                            preferences = preferences,
+                                            isOpen = true,
+                                            onToggleOpen = { selectedTurkishSettingsId = null },
+                                            onToggleExtraRow = onToggleExtraRow
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 4. Arabic Item
             val hasOtherBundled = otherBundledCards.isNotEmpty()
             val hasCustom = customCards.isNotEmpty()
             SettingsItemCard(

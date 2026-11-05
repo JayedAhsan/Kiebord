@@ -561,21 +561,12 @@ impl<'a> BinaryDict<'a> {
             return Some(curr);
         }
 
-        // Case-insensitive traversal across full word
+        // Case-insensitive traversal across full word (including Turkish dotted/dotless i/ı and diacritics)
         let units: Vec<u16> = word.encode_utf16().collect();
         let mut current_nodes = vec![0u32];
         for &u in &units {
             let mut next_nodes = Vec::new();
-            let mut targets = [u, 0];
-            let targets_len = if u >= b'a' as u16 && u <= b'z' as u16 {
-                targets[1] = u - 32;
-                2
-            } else if u >= b'A' as u16 && u <= b'Z' as u16 {
-                targets[1] = u + 32;
-                2
-            } else {
-                1
-            };
+            let (targets, targets_len) = Self::case_variants_u16(u);
             for &node in &current_nodes {
                 for &t in &targets[..targets_len] {
                     if let Some(next) = self.child(node, t) {
@@ -589,6 +580,68 @@ impl<'a> BinaryDict<'a> {
             current_nodes = next_nodes;
         }
         current_nodes.iter().copied().find(|&n| self.is_word(n)).or_else(|| current_nodes.first().copied())
+    }
+
+    #[inline]
+    fn case_variants_u16(u: u16) -> ([u16; 3], usize) {
+        let mut targets = [u, 0, 0];
+        let len = match u {
+            b if b >= b'a' as u16 && b <= b'z' as u16 => {
+                targets[1] = b - 32;
+                if b == b'i' as u16 {
+                    targets[2] = 'İ' as u16;
+                    3
+                } else {
+                    2
+                }
+            }
+            b if b >= b'A' as u16 && b <= b'Z' as u16 => {
+                targets[1] = b + 32;
+                if b == b'I' as u16 {
+                    targets[2] = 'ı' as u16;
+                    3
+                } else {
+                    2
+                }
+            }
+            u_val if u_val == 'İ' as u16 => {
+                targets[1] = b'i' as u16;
+                2
+            }
+            u_val if u_val == 'ı' as u16 => {
+                targets[1] = b'I' as u16;
+                2
+            }
+            u_val if u_val == 'ğ' as u16 => { targets[1] = 'Ğ' as u16; 2 }
+            u_val if u_val == 'Ğ' as u16 => { targets[1] = 'ğ' as u16; 2 }
+            u_val if u_val == 'ü' as u16 => { targets[1] = 'Ü' as u16; 2 }
+            u_val if u_val == 'Ü' as u16 => { targets[1] = 'ü' as u16; 2 }
+            u_val if u_val == 'ş' as u16 => { targets[1] = 'Ş' as u16; 2 }
+            u_val if u_val == 'Ş' as u16 => { targets[1] = 'ş' as u16; 2 }
+            u_val if u_val == 'ö' as u16 => { targets[1] = 'Ö' as u16; 2 }
+            u_val if u_val == 'Ö' as u16 => { targets[1] = 'ö' as u16; 2 }
+            u_val if u_val == 'ç' as u16 => { targets[1] = 'Ç' as u16; 2 }
+            u_val if u_val == 'Ç' as u16 => { targets[1] = 'ç' as u16; 2 }
+            _ => 1,
+        };
+        (targets, len)
+    }
+
+    #[inline]
+    fn normalize_lowercase(s: &str) -> String {
+        let mut out = String::with_capacity(s.len());
+        for c in s.chars() {
+            if c == 'İ' {
+                out.push('i');
+            } else {
+                for lc in c.to_lowercase() {
+                    if lc != '\u{307}' {
+                        out.push(lc);
+                    }
+                }
+            }
+        }
+        out
     }
 
     /// Traverses the dictionary trie depth-first using a single shared UTF-16 buffer,
@@ -746,7 +799,7 @@ impl<'a> BinaryDict<'a> {
 
     /// Predicts next words based on preceding committed word in O(1) time without heap allocations.
     pub fn predict_next(&self, prev_word: &str, limit: usize) -> Vec<String> {
-        let clean = prev_word.trim().to_lowercase();
+        let clean = Self::normalize_lowercase(prev_word.trim());
         let head_node = match self.find_node(&clean).or_else(|| self.find_node(prev_word.trim())) {
             Some(node) if self.is_word(node) => node,
             _ => return Vec::new(),
@@ -781,8 +834,9 @@ impl<'a> BinaryDict<'a> {
             && trimmed.chars().any(|c| c.is_alphabetic());
         let is_title_case = !is_all_upper
             && trimmed.chars().next().map_or(false, |c| c.is_uppercase());
+        let is_turkish_context = prox.is_case_pair('i', 'İ') || trimmed.contains('İ') || trimmed.contains('ı');
 
-        let search_input = trimmed.to_lowercase();
+        let search_input = Self::normalize_lowercase(trimmed);
         let typed: Vec<u16> = search_input.encode_utf16().collect();
 
         const MAX_ACCUM_LEN: usize = 48;
@@ -967,16 +1021,7 @@ impl<'a> BinaryDict<'a> {
             let target = typed[state.typed_pos];
 
             // 1. Exact match (case-insensitive across full word)
-            let mut exact_targets = [target, 0];
-            let exact_len = if target >= b'a' as u16 && target <= b'z' as u16 {
-                exact_targets[1] = target - 32;
-                2
-            } else if target >= b'A' as u16 && target <= b'Z' as u16 {
-                exact_targets[1] = target + 32;
-                2
-            } else {
-                1
-            };
+            let (exact_targets, exact_len) = Self::case_variants_u16(target);
 
             for &t_unit in &exact_targets[..exact_len] {
                 if let Some(child_node) = self.child(state.node, t_unit) {
@@ -1145,12 +1190,31 @@ impl<'a> BinaryDict<'a> {
         let mut final_suggestions = Vec::new();
         for (word, _, _) in ranked.into_iter().take(limit) {
             let formatted = if is_all_upper {
-                word.to_uppercase()
+                if is_turkish_context {
+                    word.chars()
+                        .flat_map(|c| match c {
+                            'i' => vec!['İ'],
+                            'ı' => vec!['I'],
+                            other => other.to_uppercase().collect(),
+                        })
+                        .collect()
+                } else {
+                    word.to_uppercase()
+                }
             } else if is_title_case {
                 let mut c = word.chars();
                 match c.next() {
                     None => String::new(),
-                    Some(first) => first.to_uppercase().collect::<String>() + c.as_str(),
+                    Some(first) => {
+                        let first_up: String = if is_turkish_context && first == 'i' {
+                            "İ".to_string()
+                        } else if is_turkish_context && first == 'ı' {
+                            "I".to_string()
+                        } else {
+                            first.to_uppercase().collect()
+                        };
+                        first_up + c.as_str()
+                    }
                 }
             } else {
                 word

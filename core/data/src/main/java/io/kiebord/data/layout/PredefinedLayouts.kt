@@ -1203,6 +1203,8 @@ object PredefinedLayouts {
             "bn_probhat" -> "প্রভাত"
             "bn_national" -> "জাতীয় (BSTI)"
             "ar_arabic" -> "Arabic"
+            "tr_q" -> "Türkçe (Q)"
+            "tr_q_compact" -> "Türkçe (Compact)"
             "en_qwerty" -> "English"
             "num_extended" -> "Number Pad"
             "num_normal" -> "123"

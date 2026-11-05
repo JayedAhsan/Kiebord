@@ -9,6 +9,7 @@ pub struct KeyProximity {
 }
 
 static QWERTY_PROXIMITY: OnceLock<KeyProximity> = OnceLock::new();
+static TURKISH_Q_PROXIMITY: OnceLock<KeyProximity> = OnceLock::new();
 static PROBHAT_PROXIMITY: OnceLock<KeyProximity> = OnceLock::new();
 static BORNO_PROXIMITY: OnceLock<KeyProximity> = OnceLock::new();
 static EMPTY_PROXIMITY: OnceLock<KeyProximity> = OnceLock::new();
@@ -100,6 +101,50 @@ impl KeyProximity {
     /// English QWERTY key proximity.
     pub fn qwerty() -> Self {
         Self::of_rows(&["qwertyuiop", "asdfghjkl", "zxcvbnm"])
+    }
+
+    /// Turkish Q (Full 12-key and Compact 10-key) key proximity and diacritic/case pairs.
+    pub fn turkish_q() -> Self {
+        let mut prox = Self::of_rows(&[
+            "qwertyuıopğü",
+            "asdfghjklşi",
+            "zxcvbnmöç",
+        ]);
+
+        // Also include standard 10-key QWERTY adjacencies for Compact Turkish Q ('i' next to 'u' and 'o')
+        let compact_q = Self::of_rows(&["qwertyuiop", "asdfghjkl", "zxcvbnm"]);
+        for (&ch, set) in &compact_q.neighbors {
+            for &adj in set {
+                prox.add_neighbor_bidirectional(ch, adj);
+            }
+        }
+
+        // Low-cost diacritic and Turkish case pairs (0.10 cost in beam search)
+        let diacritic_and_case_pairs: &[(char, char)] = &[
+            ('i', 'ı'),
+            ('i', 'İ'),
+            ('ı', 'I'),
+            ('i', 'I'),
+            ('ı', 'İ'),
+            ('g', 'ğ'),
+            ('u', 'ü'),
+            ('s', 'ş'),
+            ('o', 'ö'),
+            ('c', 'ç'),
+            ('a', 'â'),
+            ('i', 'î'),
+            ('u', 'û'),
+            ('ğ', 'Ğ'),
+            ('ü', 'Ü'),
+            ('ş', 'Ş'),
+            ('ö', 'Ö'),
+            ('ç', 'Ç'),
+        ];
+        for &(a, b) in diacritic_and_case_pairs {
+            prox.add_case_pair(a, b);
+        }
+
+        prox
     }
 
     /// Bengali Probhat key proximity and phonetically confusable pairs.
@@ -285,10 +330,13 @@ impl KeyProximity {
             "bn_probhat" => PROBHAT_PROXIMITY.get_or_init(Self::probhat),
             "bn_avro" => EMPTY_PROXIMITY.get_or_init(Self::new),
             "bn" => BORNO_PROXIMITY.get_or_init(Self::borno_phonetic),
+            "tr" | "tr_q" | "tr_q_compact" => TURKISH_Q_PROXIMITY.get_or_init(Self::turkish_q),
             "en_qwerty" | "en" => QWERTY_PROXIMITY.get_or_init(Self::qwerty),
             _ => {
                 if layout_id.starts_with("bn") {
                     BORNO_PROXIMITY.get_or_init(Self::borno_phonetic)
+                } else if layout_id.starts_with("tr") {
+                    TURKISH_Q_PROXIMITY.get_or_init(Self::turkish_q)
                 } else {
                     QWERTY_PROXIMITY.get_or_init(Self::qwerty)
                 }
@@ -411,6 +459,17 @@ mod tests {
         let qwerty = KeyProximity::for_layout("en_qwerty");
         assert!(qwerty.are_neighbors('q', 'w'));
 
+        let tr_q = KeyProximity::for_layout("tr_q");
+        assert!(tr_q.are_neighbors('ğ', 'ü'));
+        assert!(tr_q.are_neighbors('ş', 'i'));
+        assert!(tr_q.are_neighbors('ö', 'ç'));
+        assert!(tr_q.is_case_pair('i', 'ı'));
+        assert!(tr_q.is_case_pair('i', 'İ'));
+        assert!(tr_q.is_case_pair('s', 'ş'));
+        assert!(tr_q.is_case_pair('c', 'ç'));
+        assert!(tr_q.is_case_pair('g', 'ğ'));
+        assert!(tr_q.is_case_pair('o', 'ö'));
+        assert!(tr_q.is_case_pair('u', 'ü'));
 
         // Test dynamic registration for future layouts
         let mut custom = KeyProximity::new();

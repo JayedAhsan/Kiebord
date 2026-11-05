@@ -117,7 +117,11 @@ object NativeEngine {
     @Synchronized
     fun ensureInitialized(context: android.content.Context, lang: String) {
         if (!isLoaded) return
-        val baseLang = if (lang.startsWith("bn")) "bn" else "en"
+        val baseLang = when {
+            lang.startsWith("bn") -> "bn"
+            lang.startsWith("tr") -> "tr"
+            else -> "en"
+        }
         if (initializedLangs.contains(baseLang)) return
 
         try {

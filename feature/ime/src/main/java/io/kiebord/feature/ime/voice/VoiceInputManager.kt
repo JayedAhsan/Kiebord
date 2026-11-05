@@ -60,6 +60,7 @@ class VoiceInputManager(private val context: Context) {
         return when (language.lowercase(Locale.ROOT)) {
             "bn" -> "bn-BD"
             "en" -> "en-US"
+            "tr" -> "tr-TR"
             "hi" -> "hi-IN"
             "ar" -> "ar-SA"
             "es" -> "es-ES"

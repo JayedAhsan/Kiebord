@@ -17,6 +17,8 @@ class PredefinedLayoutsTest {
         assertEquals("অভ্র", PredefinedLayouts.displayName("bn_avro"))
         assertEquals("প্রভাত", PredefinedLayouts.displayName("bn_probhat"))
         assertEquals("Arabic", PredefinedLayouts.displayName("ar_arabic"))
+        assertEquals("Türkçe (Q)", PredefinedLayouts.displayName("tr_q"))
+        assertEquals("Türkçe (Compact)", PredefinedLayouts.displayName("tr_q_compact"))
         assertEquals("বর্ণ ইজি", PredefinedLayouts.displayName("bn_easy"))
         assertEquals("বর্ণ ইজি", PredefinedLayouts.displayName("borno_easy"))
         assertEquals("Number Pad", PredefinedLayouts.displayName("num_extended"))
@@ -1336,5 +1338,97 @@ class PredefinedLayoutsTest {
         assertEquals(expectedBnDigits, unijoySym!!.rows[0].keys.map { it.label })
         val unijoyTakaKey = unijoySym.rows[1].keys[2]
         assertEquals("৳", unijoyTakaKey.label)
+    }
+
+    @Test
+    fun testTurkishLayoutsValidationAndCasing() {
+        val json = kotlinx.serialization.json.Json { ignoreUnknownKeys = true }
+
+        // 1. Full Turkish Q (tr_q.json)
+        val trQFile = listOf(
+            java.io.File("../../feature/ime/src/main/assets/layouts/tr_q.json"),
+            java.io.File("feature/ime/src/main/assets/layouts/tr_q.json"),
+            java.io.File("../feature/ime/src/main/assets/layouts/tr_q.json")
+        ).firstOrNull { it.exists() }
+        assertNotNull("tr_q.json must exist", trQFile)
+
+        val trQ = json.decodeFromString<io.kiebord.common.model.KeyboardLayoutDef>(trQFile!!.readText())
+        assertEquals("tr_q", trQ.id)
+        assertEquals("tr", trQ.language)
+        assertEquals("Türkçe (Q)", trQ.displayName)
+        assertTrue(trQ.isQwertyBased())
+        assertEquals(4, trQ.rows.size)
+
+        // Row 0: 12 keys (q w e r t y u ı o p ğ ü)
+        val r0 = trQ.rows[0].keys
+        assertEquals(12, r0.size)
+        assertEquals(listOf("q", "w", "e", "r", "t", "y", "u", "ı", "o", "p", "ğ", "ü"), r0.map { it.label })
+
+        // Verify dotless ı -> I casing
+        val dotlessIKey = r0[7]
+        assertEquals("ı", dotlessIKey.displayLabel(io.kiebord.common.model.ShiftState.UNSHIFTED))
+        assertEquals("I", dotlessIKey.displayLabel(io.kiebord.common.model.ShiftState.ONE_SHOT))
+        assertEquals("ı", dotlessIKey.textToCommit(io.kiebord.common.model.ShiftState.UNSHIFTED))
+        assertEquals("I", dotlessIKey.textToCommit(io.kiebord.common.model.ShiftState.ONE_SHOT))
+        assertEquals("I", dotlessIKey.textToCommit(io.kiebord.common.model.ShiftState.CAPS_LOCK))
+
+        // Row 1: 11 keys (a s d f g h j k l ş i)
+        val r1 = trQ.rows[1].keys
+        assertEquals(11, r1.size)
+        assertEquals(listOf("a", "s", "d", "f", "g", "h", "j", "k", "l", "ş", "i"), r1.map { it.label })
+
+        // Verify dotted i -> İ casing
+        val dottedIKey = r1[10]
+        assertEquals("i", dottedIKey.displayLabel(io.kiebord.common.model.ShiftState.UNSHIFTED))
+        assertEquals("İ", dottedIKey.displayLabel(io.kiebord.common.model.ShiftState.ONE_SHOT))
+        assertEquals("i", dottedIKey.textToCommit(io.kiebord.common.model.ShiftState.UNSHIFTED))
+        assertEquals("İ", dottedIKey.textToCommit(io.kiebord.common.model.ShiftState.ONE_SHOT))
+        assertEquals("İ", dottedIKey.textToCommit(io.kiebord.common.model.ShiftState.CAPS_LOCK))
+
+        // Row 2: SHIFT z x c v b n m ö ç DELETE (11 keys)
+        val r2 = trQ.rows[2].keys
+        assertEquals(11, r2.size)
+        assertEquals(KeyType.SHIFT, r2[0].type)
+        assertEquals(listOf("z", "x", "c", "v", "b", "n", "m", "ö", "ç"), r2.subList(1, 10).map { it.label })
+        assertEquals(KeyType.DELETE, r2[10].type)
+
+        // Verify Turkish Lira ₺ in symbols
+        val trSym = trQ.symbolsLayout
+        assertNotNull(trSym)
+        assertEquals("₺", trSym!!.rows[1].keys[2].label)
+
+        // 2. Compact Turkish Q (tr_q_compact.json)
+        val trCompactFile = listOf(
+            java.io.File("../../feature/ime/src/main/assets/layouts/tr_q_compact.json"),
+            java.io.File("feature/ime/src/main/assets/layouts/tr_q_compact.json"),
+            java.io.File("../feature/ime/src/main/assets/layouts/tr_q_compact.json")
+        ).firstOrNull { it.exists() }
+        assertNotNull("tr_q_compact.json must exist", trCompactFile)
+
+        val trCompact = json.decodeFromString<io.kiebord.common.model.KeyboardLayoutDef>(trCompactFile!!.readText())
+        assertEquals("tr_q_compact", trCompact.id)
+        assertEquals("tr", trCompact.language)
+        assertEquals("Türkçe (Compact)", trCompact.displayName)
+        assertTrue(trCompact.isQwertyBased())
+        assertEquals(4, trCompact.rows.size)
+        assertEquals(10, trCompact.rows[0].keys.size)
+        assertEquals(9, trCompact.rows[1].keys.size)
+        assertEquals(9, trCompact.rows[2].keys.size)
+
+        // Verify compact 'i' key has İ shiftedLabel and ı/I flickUp & moreKeys
+        val compactI = trCompact.rows[0].keys[7]
+        assertEquals("i", compactI.label)
+        assertEquals("İ", compactI.displayLabel(io.kiebord.common.model.ShiftState.ONE_SHOT))
+        assertEquals("İ", compactI.textToCommit(io.kiebord.common.model.ShiftState.ONE_SHOT))
+        assertEquals("ı", compactI.flickUp(io.kiebord.common.model.ShiftState.UNSHIFTED))
+        assertEquals("I", compactI.flickUp(io.kiebord.common.model.ShiftState.ONE_SHOT))
+        assertEquals("ı", compactI.moreKeys(io.kiebord.common.model.ShiftState.UNSHIFTED).first())
+        assertEquals("I", compactI.moreKeys(io.kiebord.common.model.ShiftState.ONE_SHOT).first())
+
+        // Verify optional extraRow for Turkish characters exists and is disabled by default
+        assertEquals(1, trCompact.extraRows.size)
+        assertEquals("tr_chars_row", trCompact.extraRows[0].id)
+        assertFalse(trCompact.extraRows[0].defaultEnabled)
+        assertEquals(listOf("ğ", "ü", "ş", "ı", "ö", "ç"), trCompact.extraRows[0].keys.map { it.label })
     }
 }

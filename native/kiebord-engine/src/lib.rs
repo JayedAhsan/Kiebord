@@ -223,6 +223,8 @@ pub extern "system" fn Java_io_kiebord_feature_ime_NativeEngine_decodeGesture(
         None => {
             let dict = if lang_id.starts_with("bn") {
                 dictionary::get_bn_binary_dict()
+            } else if lang_id.starts_with("tr") {
+                dictionary::get_tr_binary_dict()
             } else {
                 dictionary::get_en_binary_dict()
             };

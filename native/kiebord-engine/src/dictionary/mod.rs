@@ -10,6 +10,7 @@ use std::sync::OnceLock;
 
 static EN_PROXIMITY: OnceLock<KeyProximity> = OnceLock::new();
 static BN_PROXIMITY: OnceLock<KeyProximity> = OnceLock::new();
+static TR_PROXIMITY: OnceLock<KeyProximity> = OnceLock::new();
 
 pub fn get_en_proximity() -> &'static KeyProximity {
     EN_PROXIMITY.get_or_init(KeyProximity::qwerty)
@@ -19,8 +20,13 @@ pub fn get_bn_proximity() -> &'static KeyProximity {
     BN_PROXIMITY.get_or_init(KeyProximity::bengali)
 }
 
+pub fn get_tr_proximity() -> &'static KeyProximity {
+    TR_PROXIMITY.get_or_init(KeyProximity::turkish_q)
+}
+
 static EN_BINARY_DICT: OnceLock<BinaryDict<'static>> = OnceLock::new();
 static BN_BINARY_DICT: OnceLock<BinaryDict<'static>> = OnceLock::new();
+static TR_BINARY_DICT: OnceLock<BinaryDict<'static>> = OnceLock::new();
 
 /// Loads a compiled .dict file from disk via zero-copy memory mapping.
 pub fn load_dictionary_path(lang: &str, path: &Path) -> bool {
@@ -40,8 +46,18 @@ pub fn load_dictionary_path(lang: &str, path: &Path) -> bool {
                 let _ = BN_BINARY_DICT.set(dict);
                 true
             }
+            "tr" | "tr_q" | "tr_q_compact" => {
+                let _ = TR_BINARY_DICT.set(dict);
+                true
+            }
             _ => {
-                let _ = EN_BINARY_DICT.set(dict);
+                if lang.starts_with("bn") {
+                    let _ = BN_BINARY_DICT.set(dict);
+                } else if lang.starts_with("tr") {
+                    let _ = TR_BINARY_DICT.set(dict);
+                } else {
+                    let _ = EN_BINARY_DICT.set(dict);
+                }
                 true
             }
         }
@@ -90,6 +106,26 @@ pub fn get_bn_binary_dict() -> Option<&'static BinaryDict<'static>> {
     None
 }
 
+pub fn get_tr_binary_dict() -> Option<&'static BinaryDict<'static>> {
+    if let Some(d) = TR_BINARY_DICT.get() {
+        return Some(d);
+    }
+    let candidates = [
+        "../../feature/ime/src/main/assets/dictionaries/tr.dict",
+        "feature/ime/src/main/assets/dictionaries/tr.dict",
+        "assets/dictionaries/tr.dict",
+    ];
+    for p in candidates {
+        let path = Path::new(p);
+        if path.exists() {
+            if load_dictionary_path("tr", path) {
+                return TR_BINARY_DICT.get();
+            }
+        }
+    }
+    None
+}
+
 /// Compiles a `.combined` file into a binary `.dict` file.
 pub fn compile_combined_file(src_path: &Path, out_path: &Path) -> std::io::Result<()> {
     let content = std::fs::read_to_string(src_path)?;
@@ -115,6 +151,8 @@ pub fn get_dictionary_metadata(lang_or_path: &str) -> String {
 
     let dict_opt = if trimmed.starts_with("bn") {
         get_bn_binary_dict()
+    } else if trimmed.starts_with("tr") {
+        get_tr_binary_dict()
     } else {
         get_en_binary_dict()
     };
@@ -138,6 +176,12 @@ pub fn generate_dict_assets(combined_dir: &Path, out_dir: &Path) -> std::io::Res
     let bn_out = out_dir.join("bn.dict");
     compile_combined_file(&bn_src, &bn_out)?;
 
+    let tr_src = combined_dir.join("tr.combined");
+    if tr_src.exists() {
+        let tr_out = out_dir.join("tr.dict");
+        compile_combined_file(&tr_src, &tr_out)?;
+    }
+
     Ok(())
 }
 
@@ -145,8 +189,11 @@ pub fn generate_dict_assets(combined_dir: &Path, out_dir: &Path) -> std::io::Res
 /// Returns a pipe-delimited string of suggestions, e.g. "the|that|this"
 pub fn get_suggestions(input: &str, lang_or_layout: &str, max_results: usize) -> String {
     let is_bn = lang_or_layout.starts_with("bn");
+    let is_tr = lang_or_layout.starts_with("tr");
     let dict_opt = if is_bn {
         get_bn_binary_dict()
+    } else if is_tr {
+        get_tr_binary_dict()
     } else {
         get_en_binary_dict()
     };
@@ -549,8 +596,11 @@ pub fn is_word(word: &str, lang_or_layout: &str) -> bool {
         return false;
     }
     let is_bn = lang_or_layout.starts_with("bn");
+    let is_tr = lang_or_layout.starts_with("tr");
     let dict_opt = if is_bn {
         get_bn_binary_dict()
+    } else if is_tr {
+        get_tr_binary_dict()
     } else {
         get_en_binary_dict()
     };
@@ -564,8 +614,11 @@ pub fn is_word(word: &str, lang_or_layout: &str) -> bool {
 /// Returns a pipe-delimited string of predicted words, e.g. "are|is|do"
 pub fn predict_next_words(prev_word: &str, lang_or_layout: &str, max_results: usize) -> String {
     let is_bn = lang_or_layout.starts_with("bn");
+    let is_tr = lang_or_layout.starts_with("tr");
     let dict_opt = if is_bn {
         get_bn_binary_dict()
+    } else if is_tr {
+        get_tr_binary_dict()
     } else {
         get_en_binary_dict()
     };
@@ -884,5 +937,35 @@ fn test_iphone_casing() {
         assert!(en_meta_str.contains("name=Kiebord English Word Dictionary;"), "en meta: {}", en_meta_str);
         assert!(en_meta_str.contains("author=Jayed Ahsan Saad;"), "en meta: {}", en_meta_str);
         assert!(en_meta_str.contains("license=Only for Kiebord;"), "en meta: {}", en_meta_str);
+    }
+
+    #[test]
+    fn test_turkish_dictionary_and_diacritic_suggestions() {
+        let tr_dict = get_tr_binary_dict().expect("tr dict loaded");
+        let prox = get_tr_proximity();
+
+        assert!(tr_dict.contains_word("merhaba"));
+        assert!(tr_dict.contains_word("teşekkürler"));
+        assert!(tr_dict.contains_word("güzel"));
+        assert!(tr_dict.contains_word("türkçe"));
+
+        // Diacritic-insensitive typo matching (e.g. typing "tesekkur" or "guzel" on compact keyboard)
+        let guzel_sugs = tr_dict.suggest("guzel", 5, prox);
+        assert!(guzel_sugs.contains(&"güzel".to_string()), "Expected 'güzel' in suggestions for 'guzel': {:?}", guzel_sugs);
+
+        let cok_sugs = tr_dict.suggest("cok", 5, prox);
+        assert!(cok_sugs.contains(&"çok".to_string()), "Expected 'çok' in suggestions for 'cok': {:?}", cok_sugs);
+
+        // Turkish dotted İ title-case and uppercase formatting
+        let ist_title = tr_dict.suggest("İst", 5, prox);
+        assert!(ist_title.iter().any(|w| w.starts_with('İ')), "Expected title case starting with 'İ': {:?}", ist_title);
+
+        let iyi_upper = tr_dict.suggest("İY", 5, prox);
+        assert!(iyi_upper.contains(&"İYİ".to_string()), "Expected 'İYİ' in uppercase suggestions: {:?}", iyi_upper);
+
+        // Next word prediction in Turkish
+        let after_te = predict_next_words("teşekkür", "tr", 3);
+        let items: Vec<&str> = after_te.split('|').filter(|s| !s.is_empty()).collect();
+        assert_eq!(items.first(), Some(&"ederim"));
     }
 }

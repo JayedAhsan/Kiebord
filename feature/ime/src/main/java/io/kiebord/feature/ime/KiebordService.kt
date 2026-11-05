@@ -249,7 +249,11 @@ class KiebordService : InputMethodService() {
             activeLayout = primaryAlphaLayout
         }
 
-        val initialLang = if (activeLayout.id.startsWith("bn")) "bn" else "en"
+        val initialLang = when {
+            activeLayout.id.startsWith("bn") -> "bn"
+            activeLayout.id.startsWith("tr") || activeLayout.language == "tr" -> "tr"
+            else -> "en"
+        }
         val secondaryLang = if (initialLang == "bn") "en" else "bn"
         serviceScope.launch(Dispatchers.IO) {
             NativeEngine.ensureInitialized(this@KiebordService, initialLang)
@@ -258,6 +262,9 @@ class KiebordService : InputMethodService() {
                 updateSuggestions()
             }
             NativeEngine.ensureInitialized(this@KiebordService, secondaryLang)
+            if (initialLang != "tr") {
+                NativeEngine.ensureInitialized(this@KiebordService, "tr")
+            }
         }
 
         serviceScope.launch {
@@ -267,7 +274,10 @@ class KiebordService : InputMethodService() {
                 colorScheme = io.kiebord.theme.ThemeRepository.getInstance(this@KiebordService).getColorScheme(prefs.theme)
                 val availableMeta = layoutRepo.getAvailableLayouts().map { it.id }.toSet()
                 val enabledIds = prefs.enabledLayoutIds.toList().filter { id ->
-                    id in availableMeta || id == KiebordPreferences.LAYOUT_AR_ARABIC
+                    id in availableMeta ||
+                            id == KiebordPreferences.LAYOUT_AR_ARABIC ||
+                            id == KiebordPreferences.LAYOUT_TR_Q ||
+                            id == KiebordPreferences.LAYOUT_TR_Q_COMPACT
                 }.ifEmpty { listOf(KiebordPreferences.LAYOUT_EN_QWERTY) }
 
                 val targetPrimaryId = if (enabledIds.contains(prefs.primaryLayoutId)) {
@@ -467,7 +477,10 @@ class KiebordService : InputMethodService() {
                     fastDeleteEnabled = preferencesState.fastDeleteEnabled,
                     onFastDelete = ::handleFastDelete,
                     enabledLayoutIds = preferencesState.enabledLayoutIds.toList().filter { id ->
-                        id in availableLayoutIds || id == KiebordPreferences.LAYOUT_AR_ARABIC
+                        id in availableLayoutIds ||
+                                id == KiebordPreferences.LAYOUT_AR_ARABIC ||
+                                id == KiebordPreferences.LAYOUT_TR_Q ||
+                                id == KiebordPreferences.LAYOUT_TR_Q_COMPACT
                     }.ifEmpty { listOf(KiebordPreferences.LAYOUT_EN_QWERTY) },
                     onSwitchToLayout = ::switchToLayout,
                     onOpenLanguagesSettings = ::openLanguagesSettings,
@@ -688,6 +701,9 @@ class KiebordService : InputMethodService() {
         bornoEasyTypedCluster = ""
         primaryAlphaLayout = layoutRepo.getLayout(layoutId)
         ensureLayoutProcessorInitialized(primaryAlphaLayout)
+        serviceScope.launch(Dispatchers.IO) {
+            NativeEngine.ensureInitialized(this@KiebordService, primaryAlphaLayout.language.ifEmpty { layoutId })
+        }
         activeLayout = if (!isSymbolsMode) {
             primaryAlphaLayout
         } else {
@@ -892,12 +908,12 @@ class KiebordService : InputMethodService() {
                             commitCharacterWithPunctuationHandling(ic, text)
                         }
                     }
-                    // English mode
-                    isEnglishLayout() -> {
+                    // English or Turkish mode
+                    isEnglishLayout() || isTurkishLayout() -> {
                         if (InputModeResolver.isDirectCommit(currentInputEditorInfo)) {
                             finishComposing()
                             commitCharacterWithPunctuationHandling(ic, text)
-                        } else if (isEnglishLetter(text)) {
+                        } else if (if (isTurkishLayout()) isTurkishLetter(text) else isEnglishLetter(text)) {
                             composingBuffer.append(text)
                             ic.setComposingText(composingBuffer.toString(), 1)
                         } else {
@@ -1229,7 +1245,10 @@ class KiebordService : InputMethodService() {
             KeyType.SWITCH_LANGUAGE -> {
                 val availableMeta = layoutRepo.getAvailableLayouts().map { it.id }.toSet()
                 val enabledIds = preferencesState.enabledLayoutIds.toList().filter { id ->
-                    id in availableMeta || id == KiebordPreferences.LAYOUT_AR_ARABIC
+                    id in availableMeta ||
+                            id == KiebordPreferences.LAYOUT_AR_ARABIC ||
+                            id == KiebordPreferences.LAYOUT_TR_Q ||
+                            id == KiebordPreferences.LAYOUT_TR_Q_COMPACT
                 }.ifEmpty { listOf(KiebordPreferences.LAYOUT_EN_QWERTY) }
 
                 if (enabledIds.size > 1) {
@@ -1279,11 +1298,22 @@ class KiebordService : InputMethodService() {
                 }
             }
             translitMgr.handleCharacter(charToInsert)
+        } else if ((isEnglishLayout() || isTurkishLayout()) &&
+            !InputModeResolver.isDirectCommit(currentInputEditorInfo) &&
+            isTurkishLetter(charToInsert)
+        ) {
+            composingBuffer.append(charToInsert)
+            ic.setComposingText(composingBuffer.toString(), 1)
         } else {
             finishComposing()
             commitCharacterWithPunctuationHandling(ic, charToInsert)
         }
         updateSuggestions()
+        if (currentShiftState == ShiftState.ONE_SHOT && shiftState == ShiftState.ONE_SHOT) {
+            if (!shouldAutoCapitalize() || !isSentenceTerminator(charToInsert)) {
+                shiftState = ShiftState.UNSHIFTED
+            }
+        }
     }
 
     private var isSwipeDeleting = false
@@ -1452,6 +1482,17 @@ class KiebordService : InputMethodService() {
         if (text.length != 1) return false
         val c = text[0]
         return (c in 'a'..'z') || (c in 'A'..'Z') || c == '\''
+    }
+
+    private fun isTurkishLetter(text: String): Boolean {
+        if (text.length != 1) return false
+        val c = text[0]
+        return (c in 'a'..'z') || (c in 'A'..'Z') || c == '\'' ||
+                c == 'ç' || c == 'Ç' || c == 'ğ' || c == 'Ğ' ||
+                c == 'ı' || c == 'I' || c == 'i' || c == 'İ' ||
+                c == 'ö' || c == 'Ö' || c == 'ş' || c == 'Ş' ||
+                c == 'ü' || c == 'Ü' || c == 'â' || c == 'Â' ||
+                c == 'î' || c == 'Î' || c == 'û' || c == 'Û'
     }
 
     private fun isUrlOrCodeField(): Boolean {
@@ -2241,14 +2282,19 @@ class KiebordService : InputMethodService() {
         return layout.language == "bn" || layout.id.startsWith("bn")
     }
 
+    private fun isTurkishLayout(layout: io.kiebord.common.model.KeyboardLayoutDef = activeLayout): Boolean {
+        return layout.language == "tr" || layout.id.startsWith("tr")
+    }
+
     private fun isEnglishLayout(layout: io.kiebord.common.model.KeyboardLayoutDef = activeLayout): Boolean {
+        if (isBanglaLayout(layout) || isTurkishLayout(layout)) return false
         return layout.language == "en" || layout.id.startsWith("en") || layout.gestureMode.equals("qwerty", ignoreCase = true)
     }
 
     private fun isQwertyBasedLayout(layoutId: String): Boolean {
         val layout = if (layoutId == activeLayout.id) activeLayout else layoutRepo.getCachedLayout(layoutId)
         return layout?.isQwertyBased()
-            ?: (layoutId == "en_qwerty" || layoutId == "bn_borno" || layoutId == "bn_avro")
+            ?: (layoutId == "en_qwerty" || layoutId == "bn_borno" || layoutId == "bn_avro" || layoutId == "tr_q" || layoutId == "tr_q_compact")
     }
 
     private data class LanguageSuggestionConfig(
@@ -2260,9 +2306,11 @@ class KiebordService : InputMethodService() {
     private fun resolveSuggestionConfig(layout: io.kiebord.common.model.KeyboardLayoutDef): LanguageSuggestionConfig {
         val lang = when {
             isBanglaLayout(layout) -> "bn"
+            isTurkishLayout(layout) -> "tr"
             isEnglishLayout(layout) -> "en"
             layout.language.isNotEmpty() -> layout.language.lowercase()
             layout.id.startsWith("bn") -> "bn"
+            layout.id.startsWith("tr") -> "tr"
             else -> "en"
         }
         return when (lang) {
@@ -2270,6 +2318,11 @@ class KiebordService : InputMethodService() {
                 dictLang = "bn",
                 cleanPrefix = { BengaliBstiEngine.cleanPending(it) },
                 isValidCandidate = { !containsLatinText(it) }
+            )
+            "tr" -> LanguageSuggestionConfig(
+                dictLang = "tr",
+                cleanPrefix = { it },
+                isValidCandidate = { !containsBengaliText(it) }
             )
             "en" -> LanguageSuggestionConfig(
                 dictLang = "en",
@@ -2287,7 +2340,7 @@ class KiebordService : InputMethodService() {
     private fun filterCandidatesForLayout(candidates: List<SuggestionCandidate>): List<SuggestionCandidate> {
         if (candidates.isEmpty()) return emptyList()
         val isBangla = isBanglaLayout()
-        val isEnglish = isEnglishLayout()
+        val isEnglishOrTurkish = isEnglishLayout() || isTurkishLayout()
         return candidates.filter { cand ->
             val text = cand.text
             if (cand.rawInput != null && cand.text == cand.rawInput) {
@@ -2295,7 +2348,7 @@ class KiebordService : InputMethodService() {
             } else {
                 when {
                     isBangla -> !containsLatinText(text)
-                    isEnglish -> !containsBengaliText(text)
+                    isEnglishOrTurkish -> !containsBengaliText(text)
                     else -> true
                 }
             }
@@ -2323,12 +2376,16 @@ class KiebordService : InputMethodService() {
         centroids: List<KeyCentroid>,
         keyWidthPx: Float
     ) {
-        if (!preferencesState.gestureTypingEnabled || !activeLayout.isQwertyBased() || (isEnglishLayout() && InputModeResolver.isDirectCommit(currentInputEditorInfo))) return
+        if (!preferencesState.gestureTypingEnabled || !activeLayout.isQwertyBased() || ((isEnglishLayout() || isTurkishLayout()) && InputModeResolver.isDirectCommit(currentInputEditorInfo))) return
         if (trail.size < 2 || centroids.isEmpty()) return
 
         gestureCommitJob?.cancel()
         gestureCommitJob = serviceScope.launch(kotlinx.coroutines.Dispatchers.Default) {
-            val lang = if (isBanglaLayout()) activeLayout.id else "en"
+            val lang = when {
+                isBanglaLayout() -> activeLayout.id
+                isTurkishLayout() -> "tr"
+                else -> "en"
+            }
             val learnedWords = if (preferencesState.learnedWordsEnabled) {
                 val all = userDictionaryRepo.getLearnedGestureWords(20)
                 if (isBanglaLayout()) {
@@ -2373,7 +2430,11 @@ class KiebordService : InputMethodService() {
     ): String? {
         if (!preferencesState.gestureTypingEnabled || !activeLayout.isQwertyBased()) return null
         if (trail.size < 4 || centroids.isEmpty()) return null
-        val lang = if (isBanglaLayout()) activeLayout.id else "en"
+        val lang = when {
+            isBanglaLayout() -> activeLayout.id
+            isTurkishLayout() -> "tr"
+            else -> "en"
+        }
         val rawCandidates = gestureDecoder.decodeGesture(trail, centroids, keyWidthPx, lang, emptyList())
         val candidates = filterCandidatesForLayout(rawCandidates)
         return candidates.firstOrNull()?.text?.trim()
@@ -2405,7 +2466,7 @@ class KiebordService : InputMethodService() {
             return
         }
 
-        if (isEnglishLayout() && (InputModeResolver.isDirectCommit(currentInputEditorInfo) || isUrlOrCodeField())) {
+        if ((isEnglishLayout() || isTurkishLayout()) && (InputModeResolver.isDirectCommit(currentInputEditorInfo) || isUrlOrCodeField())) {
             activeSuggestions = emptyList()
             return
         }

@@ -105,5 +105,7 @@ data class KiebordPreferences(
         const val LAYOUT_BN_NATIONAL = "bn_national"
         const val LAYOUT_BN_EASY = "bn_easy"
         const val LAYOUT_AR_ARABIC = "ar_arabic"
+        const val LAYOUT_TR_Q = "tr_q"
+        const val LAYOUT_TR_Q_COMPACT = "tr_q_compact"
     }
 }
