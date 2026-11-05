@@ -1,0 +1,895 @@
+name=Kiebord Turkish Word Dictionary;author=Kiebord Team;version=2;date=1761681600;license=Only for Kiebord;
+word=ve,f=255
+ bigram=bu,f=220
+  prev_word[0]=ve
+ bigram=bir,f=215
+  prev_word[0]=ve
+ bigram=daha,f=200
+  prev_word[0]=ve
+ bigram=çok,f=195
+  prev_word[0]=ve
+word=bir,f=254
+ bigram=şey,f=240
+  prev_word[0]=bir
+ bigram=gün,f=225
+  prev_word[0]=bir
+ bigram=kadar,f=215
+  prev_word[0]=bir
+ bigram=kez,f=210
+  prev_word[0]=bir
+ bigram=daha,f=205
+  prev_word[0]=bir
+ bigram=zamanlar,f=195
+  prev_word[0]=bir
+word=bu,f=252
+ bigram=kadar,f=235
+  prev_word[0]=bu
+ bigram=nedenle,f=225
+  prev_word[0]=bu
+ bigram=konuda,f=220
+  prev_word[0]=bu
+ bigram=yüzden,f=215
+  prev_word[0]=bu
+ bigram=gece,f=205
+  prev_word[0]=bu
+ bigram=sabah,f=200
+  prev_word[0]=bu
+word=da,f=250
+word=de,f=250
+word=için,f=248
+ bigram=çok,f=220
+  prev_word[0]=için
+ bigram=bir,f=215
+  prev_word[0]=için
+ bigram=teşekkürler,f=210
+  prev_word[0]=için
+word=çok,f=246
+ bigram=güzel,f=240
+  prev_word[0]=çok
+ bigram=iyi,f=235
+  prev_word[0]=çok
+ bigram=teşekkür,f=230
+  prev_word[0]=çok
+ bigram=teşekkürler,f=225
+  prev_word[0]=çok
+ bigram=fazla,f=220
+  prev_word[0]=çok
+ bigram=önemli,f=215
+  prev_word[0]=çok
+word=ben,f=245
+ bigram=de,f=235
+  prev_word[0]=ben
+ bigram=seni,f=225
+  prev_word[0]=ben
+ bigram=bunu,f=215
+  prev_word[0]=ben
+ bigram=sana,f=210
+  prev_word[0]=ben
+word=sen,f=242
+ bigram=de,f=230
+  prev_word[0]=sen
+ bigram=ne,f=220
+  prev_word[0]=sen
+ bigram=nasılsın,f=215
+  prev_word[0]=sen
+word=o,f=241
+ bigram=zaman,f=235
+  prev_word[0]=o
+ bigram=kadar,f=225
+  prev_word[0]=o
+word=biz,f=238
+ bigram=de,f=225
+  prev_word[0]=biz
+word=siz,f=235
+word=onlar,f=232
+word=ne,f=244
+ bigram=zaman,f=235
+  prev_word[0]=ne
+ bigram=kadar,f=235
+  prev_word[0]=ne
+ bigram=yapıyorsun,f=230
+  prev_word[0]=ne
+ bigram=oldu,f=225
+  prev_word[0]=ne
+ bigram=var,f=220
+  prev_word[0]=ne
+ bigram=güzel,f=215
+  prev_word[0]=ne
+ bigram=demek,f=210
+  prev_word[0]=ne
+word=ile,f=243
+ bigram=ilgili,f=235
+  prev_word[0]=ile
+ bigram=birlikte,f=230
+  prev_word[0]=ile
+word=ama,f=242
+ bigram=ben,f=220
+  prev_word[0]=ama
+ bigram=bu,f=215
+  prev_word[0]=ama
+ bigram=çok,f=210
+  prev_word[0]=ama
+word=daha,f=241
+ bigram=sonra,f=235
+  prev_word[0]=daha
+ bigram=fazla,f=230
+  prev_word[0]=daha
+ bigram=iyi,f=225
+  prev_word[0]=daha
+ bigram=önce,f=220
+  prev_word[0]=daha
+ bigram=güzel,f=215
+  prev_word[0]=daha
+word=var,f=240
+ bigram=mı,f=235
+  prev_word[0]=var
+word=yok,f=239
+ bigram=mu,f=225
+  prev_word[0]=yok
+word=gibi,f=238
+ bigram=bir,f=220
+  prev_word[0]=gibi
+word=kadar,f=237
+ bigram=güzel,f=215
+  prev_word[0]=kadar
+ bigram=çok,f=210
+  prev_word[0]=kadar
+word=sonra,f=236
+ bigram=görüştük,f=205
+  prev_word[0]=sonra
+ bigram=görüşürüz,f=220
+  prev_word[0]=sonra
+word=önce,f=235
+word=olarak,f=235
+word=olan,f=234
+word=oldu,f=233
+word=olur,f=232
+word=olsun,f=232
+word=olmak,f=230
+ bigram=üzere,f=225
+  prev_word[0]=olmak
+word=olduğu,f=229
+word=olduğunu,f=228
+word=olacak,f=227
+word=mi,f=236
+word=mı,f=236
+word=mu,f=235
+word=mü,f=234
+word=ki,f=234
+word=ya,f=233
+ bigram=da,f=235
+  prev_word[0]=ya
+word=veya,f=230
+word=ancak,f=228
+word=fakat,f=225
+word=çünkü,f=230
+word=eğer,f=226
+word=belki,f=225
+word=zaten,f=226
+word=hemen,f=227
+ bigram=hemen,f=215
+  prev_word[0]=hemen
+word=şimdi,f=235
+ bigram=ne,f=215
+  prev_word[0]=şimdi
+word=bugün,f=234
+ bigram=çok,f=215
+  prev_word[0]=bugün
+ bigram=hava,f=210
+  prev_word[0]=bugün
+word=yarın,f=232
+ bigram=sabah,f=215
+  prev_word[0]=yarın
+ bigram=görüşürüz,f=210
+  prev_word[0]=yarın
+word=dün,f=228
+ bigram=gece,f=215
+  prev_word[0]=dün
+ bigram=akşam,f=210
+  prev_word[0]=dün
+word=her,f=238
+ bigram=şey,f=235
+  prev_word[0]=her
+ bigram=zaman,f=230
+  prev_word[0]=her
+ bigram=gün,f=225
+  prev_word[0]=her
+word=hiç,f=232
+ bigram=bir,f=220
+  prev_word[0]=hiç
+word=hiçbir,f=228
+ bigram=şey,f=230
+  prev_word[0]=hiçbir
+ bigram=zaman,f=220
+  prev_word[0]=hiçbir
+word=bazı,f=222
+word=bütün,f=224
+word=tüm,f=228
+word=aynı,f=226
+ bigram=zamanda,f=230
+  prev_word[0]=aynı
+word=başka,f=226
+ bigram=bir,f=225
+  prev_word[0]=başka
+word=diğer,f=224
+word=böyle,f=225
+ bigram=bir,f=220
+  prev_word[0]=böyle
+word=şöyle,f=218
+word=öyle,f=223
+ bigram=mi,f=220
+  prev_word[0]=öyle
+ bigram=bir,f=215
+  prev_word[0]=öyle
+word=nasıl,f=235
+ bigram=bir,f=215
+  prev_word[0]=nasıl
+ bigram=yani,f=210
+  prev_word[0]=nasıl
+word=nasılsın,f=232
+ bigram=iyi,f=220
+  prev_word[0]=nasılsın
+word=nasılsınız,f=226
+word=neden,f=232
+ bigram=böyle,f=210
+  prev_word[0]=neden
+word=niçin,f=215
+word=niye,f=222
+word=nerede,f=230
+word=nereden,f=222
+word=nereye,f=224
+word=neydi,f=210
+word=kim,f=225
+word=kimin,f=215
+word=kime,f=215
+word=hangi,f=224
+word=kaç,f=222
+ bigram=saat,f=210
+  prev_word[0]=kaç
+ bigram=para,f=205
+  prev_word[0]=kaç
+word=merhaba,f=238
+ bigram=nasılsın,f=230
+  prev_word[0]=merhaba
+ bigram=arkadaşlar,f=220
+  prev_word[0]=merhaba
+word=selam,f=234
+ bigram=nasılsın,f=220
+  prev_word[0]=selam
+word=günaydın,f=232
+word=iyi,f=242
+ bigram=günler,f=235
+  prev_word[0]=iyi
+ bigram=akşamlar,f=232
+  prev_word[0]=iyi
+ bigram=geceler,f=230
+  prev_word[0]=iyi
+ bigram=ki,f=225
+  prev_word[0]=iyi
+ bigram=misin,f=222
+  prev_word[0]=iyi
+ bigram=bakalım,f=215
+  prev_word[0]=iyi
+word=iyiyim,f=228
+ bigram=teşekkürler,f=225
+  prev_word[0]=iyiyim
+ bigram=sen,f=220
+  prev_word[0]=iyiyim
+word=güzel,f=238
+ bigram=bir,f=230
+  prev_word[0]=güzel
+ bigram=olmuş,f=220
+  prev_word[0]=güzel
+word=harika,f=224
+word=mükemmel,f=220
+word=kötü,f=222
+word=evet,f=238
+word=hayır,f=236
+word=tamam,f=238
+ bigram=mı,f=220
+  prev_word[0]=tamam
+ bigram=o,f=215
+  prev_word[0]=tamam
+word=peki,f=226
+word=tabii,f=225
+ bigram=ki,f=230
+  prev_word[0]=tabii
+word=elbette,f=220
+word=lütfen,f=230
+word=teşekkür,f=236
+ bigram=ederim,f=245
+  prev_word[0]=teşekkür
+ bigram=ediyorum,f=230
+  prev_word[0]=teşekkür
+word=teşekkürler,f=238
+word=ederim,f=230
+word=rica,f=222
+ bigram=ederim,f=235
+  prev_word[0]=rica
+word=sağ,f=224
+ bigram=ol,f=230
+  prev_word[0]=sağ
+ bigram=olun,f=225
+  prev_word[0]=sağ
+word=sağol,f=222
+word=pardon,f=215
+word=özür,f=222
+ bigram=dilerim,f=235
+  prev_word[0]=özür
+word=dilerim,f=218
+word=affedersiniz,f=212
+word=hoş,f=225
+ bigram=geldin,f=235
+  prev_word[0]=hoş
+ bigram=geldiniz,f=232
+  prev_word[0]=hoş
+ bigram=bulduk,f=228
+  prev_word[0]=hoş
+word=hoşça,f=220
+ bigram=kal,f=230
+  prev_word[0]=hoşça
+ bigram=kalın,f=225
+  prev_word[0]=hoşça
+word=görüşürüz,f=232
+word=görüşmek,f=222
+ bigram=üzere,f=230
+  prev_word[0]=görüşmek
+word=güle,f=218
+ bigram=güle,f=230
+  prev_word[0]=güle
+word=allah,f=230
+ bigram=razı,f=225
+  prev_word[0]=allah
+ bigram=korusun,f=220
+  prev_word[0]=allah
+word=inşallah,f=228
+word=maşallah,f=224
+word=kolay,f=224
+ bigram=gelsin,f=235
+  prev_word[0]=kolay
+word=geçmiş,f=222
+ bigram=olsun,f=235
+  prev_word[0]=geçmiş
+word=afiyet,f=220
+ bigram=olsun,f=235
+  prev_word[0]=afiyet
+word=hayırlı,f=225
+ bigram=olsun,f=235
+  prev_word[0]=hayırlı
+ bigram=cumalar,f=225
+  prev_word[0]=hayırlı
+ bigram=sabahlar,f=220
+  prev_word[0]=hayırlı
+ bigram=işler,f=215
+  prev_word[0]=hayırlı
+word=mutlu,f=224
+ bigram=yıllar,f=230
+  prev_word[0]=mutlu
+word=tebrikler,f=218
+word=başarılar,f=218
+word=türk,f=235
+ bigram=dili,f=215
+  prev_word[0]=türk
+ bigram=kahvesi,f=210
+  prev_word[0]=türk
+word=türkçe,f=236
+ bigram=klavye,f=225
+  prev_word[0]=türkçe
+word=türkiye,f=238
+ bigram=cumhuriyeti,f=225
+  prev_word[0]=türkiye
+word=istanbul,f=235
+word=ankara,f=230
+word=izmir,f=228
+word=bursa,f=222
+word=antalya,f=222
+word=adana,f=218
+word=konya,f=218
+word=gaziantep,f=215
+word=trabzon,f=215
+word=eskişehir,f=215
+word=diyarbakır,f=212
+word=samsun,f=212
+word=kayseri,f=212
+word=mersin,f=212
+word=şey,f=238
+ bigram=yok,f=220
+  prev_word[0]=şey
+ bigram=var,f=215
+  prev_word[0]=şey
+ bigram=değil,f=210
+  prev_word[0]=şey
+word=şeyler,f=225
+word=şeyi,f=222
+word=zaman,f=236
+word=zamanlar,f=218
+word=zamanda,f=224
+word=gün,f=235
+word=günler,f=226
+word=günü,f=224
+word=günde,f=218
+word=yıl,f=230
+word=yıllar,f=222
+word=yılında,f=220
+word=ay,f=222
+word=hafta,f=225
+ bigram=sonu,f=230
+  prev_word[0]=hafta
+word=saat,f=228
+ bigram=kaçta,f=220
+  prev_word[0]=saat
+word=dakika,f=222
+word=saniye,f=215
+word=sabah,f=228
+word=öğle,f=218
+word=öğlen,f=218
+word=akşam,f=228
+word=akşamlar,f=224
+word=gece,f=228
+word=geceler,f=224
+word=erkenden,f=210
+word=erken,f=218
+word=geç,f=220
+word=insan,f=230
+word=insanlar,f=226
+word=insanların,f=220
+word=kişi,f=226
+word=kişiler,f=218
+word=çocuk,f=226
+word=çocuklar,f=224
+word=kadın,f=224
+word=kadınlar,f=218
+word=erkek,f=222
+word=aile,f=224
+word=anne,f=228
+word=baba,f=226
+word=kardeş,f=222
+word=kardeşim,f=224
+word=abla,f=218
+word=abi,f=222
+word=arkadaş,f=226
+word=arkadaşlar,f=228
+word=arkadaşım,f=224
+word=dost,f=218
+word=dostum,f=218
+word=sevgili,f=220
+word=sevgilim,f=222
+word=aşk,f=222
+word=aşkım,f=224
+word=canım,f=226
+word=hayat,f=228
+word=hayatım,f=222
+word=dünya,f=228
+word=ülke,f=222
+word=şehir,f=222
+word=ev,f=228
+word=eve,f=226
+ bigram=gidiyorum,f=220
+  prev_word[0]=eve
+word=evde,f=226
+ bigram=misin,f=215
+  prev_word[0]=evde
+word=evden,f=220
+word=okul,f=224
+word=okula,f=220
+word=okulda,f=218
+word=iş,f=228
+word=işe,f=222
+word=işte,f=224
+word=işler,f=220
+word=çalışma,f=222
+word=çalışıyorum,f=220
+word=yol,f=222
+word=yolda,f=220
+word=araba,f=220
+word=otobüs,f=216
+word=metro,f=214
+word=uçak,f=214
+word=para,f=226
+word=lira,f=222
+word=su,f=226
+word=çay,f=226
+word=kahve,f=226
+word=yemek,f=228
+word=ekmek,f=220
+word=kahvaltı,f=222
+word=kitap,f=224
+word=film,f=220
+word=müzik,f=220
+word=oyun,f=220
+word=telefon,f=226
+word=bilgisayar,f=222
+word=internet,f=224
+word=mesaj,f=224
+word=fotoğraf,f=222
+word=video,f=220
+word=haber,f=224
+word=haberler,f=220
+word=soru,f=222
+word=sorun,f=224
+ bigram=değil,f=225
+  prev_word[0]=sorun
+ bigram=yok,f=220
+  prev_word[0]=sorun
+word=cevap,f=222
+word=konu,f=222
+word=konuda,f=222
+word=durum,f=222
+word=durumda,f=218
+word=yer,f=226
+word=yerde,f=222
+word=yere,f=220
+word=taraf,f=218
+word=taraftan,f=215
+word=şekilde,f=226
+word=nedeniyle,f=220
+word=yüzden,f=224
+word=arasında,f=224
+word=üzerinde,f=222
+word=üzerine,f=220
+word=altında,f=218
+word=içinde,f=226
+word=içerisinde,f=218
+word=dışında,f=218
+word=yanında,f=220
+word=karşı,f=222
+word=doğru,f=226
+word=yanlış,f=220
+word=gerçek,f=222
+word=gerçekten,f=228
+ bigram=çok,f=220
+  prev_word[0]=gerçekten
+word=kesinlikle,f=224
+word=aslında,f=226
+word=galiba,f=218
+word=sanırım,f=224
+word=bence,f=226
+word=sence,f=220
+word=yani,f=228
+word=acaba,f=220
+word=keşke,f=220
+word=neyse,f=222
+word=bile,f=224
+word=sadece,f=228
+word=yalnız,f=220
+word=yalnızca,f=218
+word=artık,f=226
+word=hala,f=220
+word=henüz,f=220
+word=tekrar,f=222
+word=yine,f=226
+ bigram=de,f=220
+  prev_word[0]=yine
+word=birlikte,f=224
+word=beraber,f=222
+word=ayrı,f=218
+word=ayrıca,f=222
+word=özellikle,f=222
+word=genellikle,f=218
+word=bazen,f=220
+word=sürekli,f=220
+word=devam,f=224
+ bigram=ediyor,f=225
+  prev_word[0]=devam
+ bigram=etmek,f=215
+  prev_word[0]=devam
+word=büyük,f=228
+ bigram=bir,f=220
+  prev_word[0]=büyük
+word=küçük,f=224
+word=yeni,f=228
+ bigram=bir,f=220
+  prev_word[0]=yeni
+word=eski,f=222
+word=uzun,f=222
+word=kısa,f=220
+word=yüksek,f=222
+word=düşük,f=218
+word=önemli,f=228
+ bigram=olan,f=220
+  prev_word[0]=önemli
+ bigram=bir,f=215
+  prev_word[0]=önemli
+word=özel,f=222
+word=genel,f=220
+word=farklı,f=224
+word=benzer,f=218
+word=zor,f=222
+word=hızlı,f=220
+word=yavaş,f=216
+word=sıcak,f=220
+word=soğuk,f=220
+word=açık,f=222
+word=kapalı,f=218
+word=dolu,f=218
+word=boş,f=218
+word=temiz,f=218
+word=hazır,f=220
+word=yakın,f=220
+word=uzak,f=218
+word=son,f=228
+ bigram=derece,f=220
+  prev_word[0]=son
+word=ilk,f=228
+word=tek,f=224
+word=fazla,f=226
+word=az,f=222
+word=biraz,f=226
+ bigram=daha,f=220
+  prev_word[0]=biraz
+word=oldukça,f=220
+word=gayet,f=218
+word=tam,f=224
+ bigram=olarak,f=225
+  prev_word[0]=tam
+word=değil,f=236
+ bigram=mi,f=230
+  prev_word[0]=değil
+word=değilim,f=220
+word=lazım,f=226
+word=gerek,f=226
+ bigram=yok,f=225
+  prev_word[0]=gerek
+word=gerekiyor,f=224
+word=gerekli,f=220
+word=mümkün,f=220
+word=belli,f=218
+word=kesin,f=220
+word=emin,f=220
+ bigram=misin,f=220
+  prev_word[0]=emin
+word=memnun,f=220
+ bigram=oldum,f=230
+  prev_word[0]=memnun
+word=üzgünüm,f=218
+word=yorgun,f=218
+word=hasta,f=218
+word=meşgul,f=216
+word=serbest,f=214
+word=rahat,f=218
+word=dikkat,f=220
+word=yardım,f=222
+word=destek,f=220
+word=bilgi,f=224
+word=fikir,f=220
+word=karar,f=222
+word=plan,f=218
+word=hedef,f=216
+word=başarı,f=218
+word=şans,f=218
+word=umut,f=218
+word=güven,f=218
+word=saygı,f=218
+word=sevgi,f=220
+word=huzur,f=218
+word=mutluluk,f=218
+word=sağlık,f=222
+word=sağlıklı,f=218
+word=eğitim,f=220
+word=öğrenci,f=220
+word=öğretmen,f=220
+word=doktor,f=218
+word=hastane,f=216
+word=ilaç,f=214
+word=market,f=218
+word=mağaza,f=214
+word=banka,f=216
+word=fiyat,f=218
+word=ücret,f=214
+word=hesap,f=218
+word=ödeme,f=216
+word=sipariş,f=218
+word=kargo,f=218
+word=adres,f=218
+word=numara,f=218
+word=şifre,f=218
+word=uygulama,f=220
+word=program,f=218
+word=sistem,f=218
+word=ayarlar,f=218
+word=klavye,f=222
+word=ekran,f=218
+word=dosya,f=218
+word=resim,f=218
+word=ses,f=220
+word=ışık,f=222
+word=güneş,f=220
+word=yağmur,f=218
+word=rüzgar,f=216
+word=kar,f=216
+word=deniz,f=220
+word=doğa,f=218
+word=ağaç,f=216
+word=çiçek,f=218
+word=köpek,f=216
+word=kedi,f=218
+word=kuş,f=214
+word=renk,f=216
+word=beyaz,f=218
+word=siyah,f=218
+word=kırmızı,f=218
+word=mavi,f=218
+word=yeşil,f=218
+word=sarı,f=216
+word=yapmak,f=224
+word=yapıyorum,f=226
+word=yapıyorsun,f=226
+word=yaptım,f=224
+word=yapacağım,f=222
+word=yapabiliriz,f=218
+word=etmek,f=222
+word=ediyorum,f=224
+word=etti,f=220
+word=gelmek,f=220
+word=geliyorum,f=226
+word=geldim,f=226
+word=gelecek,f=224
+word=geldi,f=226
+word=gel,f=226
+word=gitmek,f=220
+word=gidiyorum,f=226
+word=gittim,f=222
+word=gitti,f=222
+word=git,f=222
+word=almak,f=220
+word=aldım,f=224
+word=aldı,f=220
+word=al,f=222
+word=vermek,f=220
+word=verdim,f=220
+word=verdi,f=220
+word=ver,f=222
+word=görmek,f=220
+word=gördüm,f=222
+word=görüyorum,f=220
+word=bakmak,f=218
+word=bakıyorum,f=220
+word=bak,f=224
+word=bakalım,f=224
+word=bilmek,f=218
+word=biliyorum,f=228
+word=bilmiyorum,f=228
+word=istemek,f=218
+word=istiyorum,f=230
+word=istemiyorum,f=222
+word=ister,f=220
+ bigram=misin,f=225
+  prev_word[0]=ister
+word=demek,f=224
+word=dedi,f=226
+word=dedim,f=224
+word=diyor,f=222
+word=söylemek,f=220
+word=söyledi,f=222
+word=söyledim,f=220
+word=söyle,f=222
+word=konuşmak,f=220
+word=konuşuyoruz,f=218
+word=anlamak,f=218
+word=anladım,f=226
+word=anlaşıldı,f=220
+word=düşünmek,f=218
+word=düşünüyorum,f=224
+word=sevmek,f=218
+word=seviyorum,f=228
+word=beklemek,f=218
+word=bekliyorum,f=224
+word=başlamak,f=218
+word=başladı,f=222
+word=bitmek,f=216
+word=bitti,f=222
+word=bulmak,f=218
+word=buldum,f=222
+word=kalmak,f=218
+word=kaldı,f=222
+word=çıkmak,f=218
+word=çıktı,f=222
+word=girmek,f=216
+word=girdi,f=218
+word=yazmak,f=218
+word=yazıyorum,f=220
+word=yazdım,f=220
+word=okumak,f=218
+word=okuyorum,f=218
+word=dinlemek,f=216
+word=izlemek,f=218
+word=uyumak,f=216
+word=uyanmak,f=214
+word=gülmek,f=216
+word=ağlamak,f=214
+word=koşmak,f=214
+word=yürümek,f=216
+word=oturmak,f=216
+word=kalkmak,f=216
+word=açmak,f=218
+word=kapatmak,f=216
+word=kullanmak,f=220
+word=aramak,f=218
+word=arıyorum,f=220
+word=beni,f=230
+word=bana,f=232
+word=bende,f=222
+word=benden,f=220
+word=benim,f=232
+ bigram=için,f=225
+  prev_word[0]=benim
+word=seni,f=230
+ bigram=seviyorum,f=240
+  prev_word[0]=seni
+ bigram=çok,f=230
+  prev_word[0]=seni
+word=sana,f=230
+word=sende,f=220
+word=senden,f=218
+word=senin,f=228
+word=onu,f=226
+word=ona,f=226
+word=onda,f=218
+word=ondan,f=220
+word=onun,f=226
+word=bizi,f=222
+word=bize,f=224
+word=bizde,f=218
+word=bizden,f=218
+word=bizim,f=226
+word=sizi,f=220
+word=size,f=224
+word=sizin,f=222
+word=onları,f=220
+word=onlara,f=218
+word=onların,f=220
+word=bunu,f=228
+word=buna,f=222
+word=bunda,f=218
+word=bundan,f=222
+ bigram=sonra,f=225
+  prev_word[0]=bundan
+word=bunun,f=224
+word=şunu,f=218
+word=burada,f=228
+word=buraya,f=224
+word=buradan,f=220
+word=orada,f=224
+word=oraya,f=220
+word=oradan,f=218
+word=neredeyiz,f=212
+word=neredesin,f=224
+word=iki,f=228
+word=üç,f=224
+word=dört,f=220
+word=beş,f=220
+word=altı,f=218
+word=yedi,f=218
+word=sekiz,f=216
+word=dokuz,f=216
+word=on,f=222
+word=yirmi,f=216
+word=otuz,f=214
+word=kırk,f=214
+word=elli,f=214
+word=yüz,f=220
+word=bin,f=222
+word=milyon,f=218
+word=pazartesi,f=218
+word=salı,f=216
+word=çarşamba,f=216
+word=perşembe,f=216
+word=cuma,f=220
+word=cumartesi,f=218
+word=pazar,f=218
+word=ocak,f=216
+word=şubat,f=216
+word=mart,f=216
+word=nisan,f=216
+word=mayıs,f=216
+word=haziran,f=216
+word=temmuz,f=216
+word=ağustos,f=216
+word=eylül,f=216
+word=ekim,f=216
+word=kasım,f=216
+word=aralık,f=216
+word=ilkbahar,f=212
+word=yaz,f=218
+word=sonbahar,f=212
+word=kış,f=216
