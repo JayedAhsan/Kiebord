@@ -1205,6 +1205,7 @@ object PredefinedLayouts {
             "ar_arabic" -> "Arabic"
             "tr_q" -> "Türkçe (Q)"
             "tr_q_compact" -> "Türkçe (Compact)"
+            "tr_f" -> "Türkçe (F)"
             "en_qwerty" -> "English"
             "num_extended" -> "Number Pad"
             "num_normal" -> "123"

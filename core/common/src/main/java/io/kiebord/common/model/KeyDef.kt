@@ -221,7 +221,7 @@ data class KeyboardLayoutDef(
     fun isQwertyBased(): Boolean {
         if (isSymbolsLayout() || noGesture) return false
         if (gestureMode?.equals("qwerty", ignoreCase = true) == true) return true
-        if (id == "en_qwerty" || id == "bn_borno" || id == "bn_avro" || id == "tr_q" || id == "tr_q_compact" || language == "tr") return true
+        if (id == "en_qwerty" || id == "bn_borno" || id == "bn_avro" || id == "tr_q" || id == "tr_q_compact" || id == "tr_f" || language == "tr") return true
         return rows.any { row ->
             val charLabels = row.keys.filter { it.type == KeyType.CHARACTER }.map { it.label.lowercase() }
             charLabels.size >= 6 && charLabels.take(6) == listOf("q", "w", "e", "r", "t", "y")

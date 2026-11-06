@@ -2294,7 +2294,7 @@ class KiebordService : InputMethodService() {
     private fun isQwertyBasedLayout(layoutId: String): Boolean {
         val layout = if (layoutId == activeLayout.id) activeLayout else layoutRepo.getCachedLayout(layoutId)
         return layout?.isQwertyBased()
-            ?: (layoutId == "en_qwerty" || layoutId == "bn_borno" || layoutId == "bn_avro" || layoutId == "tr_q" || layoutId == "tr_q_compact")
+            ?: (layoutId == "en_qwerty" || layoutId == "bn_borno" || layoutId == "bn_avro" || layoutId == "tr_q" || layoutId == "tr_q_compact" || layoutId == "tr_f")
     }
 
     private data class LanguageSuggestionConfig(

@@ -189,7 +189,13 @@ fun KeyboardLayoutsScreen(
                 ?: PredefinedLayouts.fromId(KiebordPreferences.LAYOUT_TR_Q_COMPACT)
         )
     }
-    val turkishCards = remember(turkishQLayout, turkishCompactLayout) {
+    var turkishFLayout by remember {
+        mutableStateOf(
+            layoutRepo.getCachedLayout(KiebordPreferences.LAYOUT_TR_F)
+                ?: PredefinedLayouts.fromId(KiebordPreferences.LAYOUT_TR_F)
+        )
+    }
+    val turkishCards = remember(turkishQLayout, turkishCompactLayout, turkishFLayout) {
         listOf(
             LayoutCardData(
                 id = KiebordPreferences.LAYOUT_TR_Q,
@@ -202,6 +208,12 @@ fun KeyboardLayoutsScreen(
                 name = turkishCompactLayout.displayName ?: "Türkçe (Compact)",
                 description = turkishCompactLayout.description ?: "Compact 10-key QWERTY layout with Turkish characters on long-press and flick-up",
                 layoutDef = turkishCompactLayout
+            ),
+            LayoutCardData(
+                id = KiebordPreferences.LAYOUT_TR_F,
+                name = turkishFLayout.displayName ?: "Türkçe (F)",
+                description = turkishFLayout.description ?: "National standard Turkish F layout (TS 2117) optimized for touch typing",
+                layoutDef = turkishFLayout
             )
         )
     }
@@ -220,12 +232,16 @@ fun KeyboardLayoutsScreen(
         val loadedTrCompact = withContext(Dispatchers.IO) {
             layoutRepo.getLayout(KiebordPreferences.LAYOUT_TR_Q_COMPACT)
         }
+        val loadedTrF = withContext(Dispatchers.IO) {
+            layoutRepo.getLayout(KiebordPreferences.LAYOUT_TR_F)
+        }
         val loadedMeta = withContext(Dispatchers.IO) {
             layoutRepo.getAvailableLayouts()
         }
         arabicLayout = loadedArabic
         turkishQLayout = loadedTrQ
         turkishCompactLayout = loadedTrCompact
+        turkishFLayout = loadedTrF
         availableMeta = loadedMeta
     }
 

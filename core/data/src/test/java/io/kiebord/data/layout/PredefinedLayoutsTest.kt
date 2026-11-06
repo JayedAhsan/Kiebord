@@ -19,6 +19,7 @@ class PredefinedLayoutsTest {
         assertEquals("Arabic", PredefinedLayouts.displayName("ar_arabic"))
         assertEquals("Türkçe (Q)", PredefinedLayouts.displayName("tr_q"))
         assertEquals("Türkçe (Compact)", PredefinedLayouts.displayName("tr_q_compact"))
+        assertEquals("Türkçe (F)", PredefinedLayouts.displayName("tr_f"))
         assertEquals("বর্ণ ইজি", PredefinedLayouts.displayName("bn_easy"))
         assertEquals("বর্ণ ইজি", PredefinedLayouts.displayName("borno_easy"))
         assertEquals("Number Pad", PredefinedLayouts.displayName("num_extended"))
@@ -1430,5 +1431,43 @@ class PredefinedLayoutsTest {
         assertEquals("tr_chars_row", trCompact.extraRows[0].id)
         assertFalse(trCompact.extraRows[0].defaultEnabled)
         assertEquals(listOf("ğ", "ü", "ş", "ı", "ö", "ç"), trCompact.extraRows[0].keys.map { it.label })
+
+        // 3. National Turkish F (tr_f.json)
+        val trFFile = listOf(
+            java.io.File("../../feature/ime/src/main/assets/layouts/tr_f.json"),
+            java.io.File("feature/ime/src/main/assets/layouts/tr_f.json"),
+            java.io.File("../feature/ime/src/main/assets/layouts/tr_f.json")
+        ).firstOrNull { it.exists() }
+        assertNotNull("tr_f.json must exist", trFFile)
+
+        val trF = json.decodeFromString<io.kiebord.common.model.KeyboardLayoutDef>(trFFile!!.readText())
+        assertEquals("tr_f", trF.id)
+        assertEquals("tr", trF.language)
+        assertEquals("Türkçe (F)", trF.displayName)
+        assertTrue(trF.isQwertyBased())
+        assertEquals(4, trF.rows.size)
+
+        // Row 0: 12 keys (f g ğ ı o d r n h p q w)
+        val fR0 = trF.rows[0].keys
+        assertEquals(12, fR0.size)
+        assertEquals(listOf("f", "g", "ğ", "ı", "o", "d", "r", "n", "h", "p", "q", "w"), fR0.map { it.label })
+
+        // Row 1: 12 keys (u i e a ü t k m l y ş x)
+        val fR1 = trF.rows[1].keys
+        assertEquals(12, fR1.size)
+        assertEquals(listOf("u", "i", "e", "a", "ü", "t", "k", "m", "l", "y", "ş", "x"), fR1.map { it.label })
+
+        // Verify Turkish F 'i' -> 'İ' casing
+        val fDottedIKey = fR1[1]
+        assertEquals("i", fDottedIKey.displayLabel(io.kiebord.common.model.ShiftState.UNSHIFTED))
+        assertEquals("İ", fDottedIKey.displayLabel(io.kiebord.common.model.ShiftState.ONE_SHOT))
+        assertEquals("İ", fDottedIKey.textToCommit(io.kiebord.common.model.ShiftState.ONE_SHOT))
+
+        // Row 2: SHIFT j ö v c ç z s b DELETE (10 keys)
+        val fR2 = trF.rows[2].keys
+        assertEquals(10, fR2.size)
+        assertEquals(KeyType.SHIFT, fR2[0].type)
+        assertEquals(listOf("j", "ö", "v", "c", "ç", "z", "s", "b"), fR2.subList(1, 9).map { it.label })
+        assertEquals(KeyType.DELETE, fR2[9].type)
     }
 }

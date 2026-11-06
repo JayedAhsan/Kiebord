@@ -46,7 +46,7 @@ pub fn load_dictionary_path(lang: &str, path: &Path) -> bool {
                 let _ = BN_BINARY_DICT.set(dict);
                 true
             }
-            "tr" | "tr_q" | "tr_q_compact" => {
+            "tr" | "tr_q" | "tr_q_compact" | "tr_f" => {
                 let _ = TR_BINARY_DICT.set(dict);
                 true
             }
