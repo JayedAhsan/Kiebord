@@ -383,13 +383,6 @@
             "S",
             "ẞ"
           ]
-        },
-        {
-          "label": "x",
-          "shiftedLabel": "X",
-          "moreKeys": [
-            "ACTION_CUT"
-          ]
         }
       ]
     },
@@ -489,6 +482,13 @@
           "shiftedLabel": "B",
           "moreKeys": [
             "&"
+          ]
+        },
+        {
+          "label": "x",
+          "shiftedLabel": "X",
+          "moreKeys": [
+            "ACTION_CUT"
           ]
         },
         {

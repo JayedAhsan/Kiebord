@@ -1452,10 +1452,10 @@ class PredefinedLayoutsTest {
         assertEquals(12, fR0.size)
         assertEquals(listOf("f", "g", "ğ", "ı", "o", "d", "r", "n", "h", "p", "q", "w"), fR0.map { it.label })
 
-        // Row 1: 12 keys (u i e a ü t k m l y ş x)
+        // Row 1: 11 keys (u i e a ü t k m l y ş)
         val fR1 = trF.rows[1].keys
-        assertEquals(12, fR1.size)
-        assertEquals(listOf("u", "i", "e", "a", "ü", "t", "k", "m", "l", "y", "ş", "x"), fR1.map { it.label })
+        assertEquals(11, fR1.size)
+        assertEquals(listOf("u", "i", "e", "a", "ü", "t", "k", "m", "l", "y", "ş"), fR1.map { it.label })
 
         // Verify Turkish F 'i' -> 'İ' casing
         val fDottedIKey = fR1[1]
@@ -1463,11 +1463,11 @@ class PredefinedLayoutsTest {
         assertEquals("İ", fDottedIKey.displayLabel(io.kiebord.common.model.ShiftState.ONE_SHOT))
         assertEquals("İ", fDottedIKey.textToCommit(io.kiebord.common.model.ShiftState.ONE_SHOT))
 
-        // Row 2: SHIFT j ö v c ç z s b DELETE (10 keys)
+        // Row 2: SHIFT j ö v c ç z s b x DELETE (11 keys)
         val fR2 = trF.rows[2].keys
-        assertEquals(10, fR2.size)
+        assertEquals(11, fR2.size)
         assertEquals(KeyType.SHIFT, fR2[0].type)
-        assertEquals(listOf("j", "ö", "v", "c", "ç", "z", "s", "b"), fR2.subList(1, 9).map { it.label })
-        assertEquals(KeyType.DELETE, fR2[9].type)
+        assertEquals(listOf("j", "ö", "v", "c", "ç", "z", "s", "b", "x"), fR2.subList(1, 10).map { it.label })
+        assertEquals(KeyType.DELETE, fR2[10].type)
     }
 }

@@ -148,12 +148,12 @@ impl KeyProximity {
         prox
     }
 
-    /// Turkish F (National standard TS 2117) key proximity and diacritic/case pairs.
+    /// Turkish F (National standard TS 2117 / touch 12-11-9) key proximity and diacritic/case pairs.
     pub fn turkish_f() -> Self {
         let mut prox = Self::of_rows(&[
             "fgğıodrnhpqw",
-            "uieaütkmlyşx",
-            "jövcçzsb",
+            "uieaütkmlyş",
+            "jövcçzsbx",
         ]);
 
         // Low-cost diacritic and Turkish case pairs (0.10 cost in beam search)
