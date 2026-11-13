@@ -12,6 +12,8 @@ data class LanguagePackMetadata(
     val language: String,
     val locale: String = language,
     val displayName: String,
+    @JsonNames("language_display_name", "language_displayName")
+    val languageDisplayName: String? = null,
     val author: String = "",
     val license: String = "",
     @JsonNames("acknowledgement", "acknowledgments", "acknowledgements", "credits")
