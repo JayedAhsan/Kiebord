@@ -110,6 +110,17 @@ class KiebordService : InputMethodService() {
                 layout.id == KiebordPreferences.LAYOUT_BN_AVRO
     }
 
+    /**
+     * Whether the layout's script distinguishes upper/lower case, so auto-capitalization
+     * applies. Bangla-script layouts (language "bn", or romanized ids like "bn_*" whose
+     * language tag does not declare a Latin script) have no letter case. Romanized
+     * Bangla layouts (e.g. Shörolipi, language "bn-Latn") do, and behave like English.
+     */
+    private fun layoutHasLetterCase(layout: KeyboardLayoutDef): Boolean {
+        if (!isBanglaLayout(layout)) return true
+        return layout.language.contains("latn", ignoreCase = true)
+    }
+
     private fun shouldAutoCapitalize(): Boolean {
         if (!preferencesState.autoCapitalization) return false
         val layoutToCheck = if (activeLayout.isSymbolsLayout() || PredefinedLayouts.isNumberLayout(activeLayout.id)) {
@@ -118,7 +129,7 @@ class KiebordService : InputMethodService() {
             activeLayout
         }
         if (layoutToCheck.noAutoCapitalization) return false
-        if (isBanglaLayout(layoutToCheck)) return false
+        if (!layoutHasLetterCase(layoutToCheck)) return false
         if (isPhoneticLayout(layoutToCheck)) return false
         if (!layoutToCheck.hasShiftKey()) return false
         val info = currentEditorInfoState ?: currentInputEditorInfo
