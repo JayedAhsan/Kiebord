@@ -26,5 +26,19 @@
     "sizeBytes": 20715,
     "hasDictionary": false,
     "credit": "Touchscreen-optimized m17n input method rules for Bangla typing (https://github.com/KhiproTeam/khipro-mim-touchscreen and https://github.com/KhiproTeam/khipro-dark-m17n)"
+  },
+  {
+    "id": "shorolipi",
+    "name": "Shörolipi Layouts",
+    "language": "bn-Latn",
+    "version": 1,
+    "author": "qomarhsn",
+    "description": "Shörolipi Layouts (2 layout(s))",
+    "downloadUrl": "https://raw.githubusercontent.com/JayedAhsan/Kiebord/main/language-packs/releases/shorolipi.bornolang",
+    "sha256": "a1dd3fc49f9649cf8bf8ed2cd58e47f5184f8794fdc23904f9d539a1f4e8badf",
+    "sizeBytes": 5188,
+    "hasDictionary": false,
+    "credit": "Shörolipi script by Khipro Team — maintainers rank_coder & tareqlr (https://github.com/KhiproTeam/shorolipi)",
+    "languageDisplayName": "Bangla (Latin)"
   }
 ]

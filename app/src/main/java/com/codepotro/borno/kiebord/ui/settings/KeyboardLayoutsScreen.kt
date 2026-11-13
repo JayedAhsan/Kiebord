@@ -105,6 +105,11 @@ private data class LayoutCardData(
 
 private fun resolveLanguageTitle(langCode: String, cards: List<LayoutCardData>, repo: LanguagePackRepository): String {
     val pack = cards.firstNotNullOfOrNull { repo.getPackForLayout(it.id) }
+    // Explicit language group name from the pack (decoupled from the extension display name)
+    val languageDisplayName = pack?.languageDisplayName
+    if (!languageDisplayName.isNullOrBlank()) {
+        return languageDisplayName
+    }
     if (pack != null && pack.displayName.isNotBlank()) {
         return pack.displayName
     }
