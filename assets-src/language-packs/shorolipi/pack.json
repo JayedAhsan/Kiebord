@@ -1,0 +1,16 @@
+{
+  "id": "shorolipi",
+  "version": 1,
+  "language": "bn-Latn",
+  "locale": "bn-Latn-BD",
+  "displayName": "Shörolipi Layouts",
+  "languageDisplayName": "Bangla (Latin)",
+  "author": "qomarhsn",
+  "credit": "Shörolipi script by Khipro Team — maintainers rank_coder & tareqlr (https://github.com/KhiproTeam/shorolipi)",
+  "license": "MIT",
+  "layouts": [
+    "bn_shorolipi",
+    "bn_shorolipi_q"
+  ],
+  "currencySymbol": "৳"
+}

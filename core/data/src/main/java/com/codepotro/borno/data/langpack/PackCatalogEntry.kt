@@ -10,6 +10,8 @@ data class PackCatalogEntry(
     val id: String,
     val version: Int = 1,
     val name: String,
+    @JsonNames("language_display_name", "language_displayName")
+    val languageDisplayName: String? = null,
     val author: String = "",
     @JsonNames("acknowledgement", "acknowledgments", "acknowledgements", "credits")
     val credit: String? = null,

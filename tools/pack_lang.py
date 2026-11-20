@@ -216,6 +216,8 @@ def update_catalog_index(manifest: dict, pack_path: Path, sha256_hash: str, inde
 
     if manifest.get("credit") or manifest.get("acknowledgement"):
         entry["credit"] = manifest.get("credit") or manifest.get("acknowledgement")
+    if manifest.get("languageDisplayName") or manifest.get("language_display_name"):
+        entry["languageDisplayName"] = manifest.get("languageDisplayName") or manifest.get("language_display_name")
     if manifest.get("dictionaryCredit") or manifest.get("dictionary_credit") or manifest.get("wordlistCredit"):
         entry["dictionaryCredit"] = manifest.get("dictionaryCredit") or manifest.get("dictionary_credit") or manifest.get("wordlistCredit")
     if manifest.get("dictionaryLicense") or manifest.get("dictionary_license") or manifest.get("wordlistLicense"):
