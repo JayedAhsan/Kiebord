@@ -1086,7 +1086,10 @@ fun KeyboardRootView(
                         Class.forName("${context.packageName}.MainActivity")
                     }.getOrNull() ?: Class.forName("com.codepotro.borno.kiebord.MainActivity")
                     val intent = android.content.Intent(context, activityClass).apply {
-                        flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+                        flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK or
+                            android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                            android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP
+                        putExtra("navigate_to", "main")
                     }
                     context.startActivity(intent)
                 } catch (_: Exception) {}

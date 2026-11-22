@@ -595,6 +595,45 @@ class KiebordPreferencesRepository private constructor(private val context: Cont
         context.kiebordDataStore.edit { it[PreferencesKeys.AUTO_DELETE_RECENT_CLIPS_DURATION_HOURS] = clamped }
     }
 
+    suspend fun updateOnboardingLayouts(enabledLayouts: Set<String>, primaryLayoutId: String) {
+        if (enabledLayouts.isEmpty()) return
+        context.kiebordDataStore.edit { prefs ->
+            val sanitizedEnabled = enabledLayouts.toMutableSet()
+            val resolvedPrimary = if (primaryLayoutId in sanitizedEnabled) {
+                primaryLayoutId
+            } else {
+                sanitizedEnabled.first()
+            }
+            prefs[PreferencesKeys.ENABLED_LAYOUT_IDS] = sanitizedEnabled
+            prefs[PreferencesKeys.PRIMARY_LAYOUT_ID] = resolvedPrimary
+
+            val existingOrder = prefs[PreferencesKeys.ENABLED_LAYOUT_ORDER]
+                ?.split(",")
+                ?.map { it.trim() }
+                ?.filter { it.isNotEmpty() && it in sanitizedEnabled }
+                ?.toMutableList()
+                ?: mutableListOf()
+            for (id in sanitizedEnabled) {
+                if (id !in existingOrder) existingOrder.add(id)
+            }
+            prefs[PreferencesKeys.ENABLED_LAYOUT_ORDER] = existingOrder.joinToString(",")
+        }
+    }
+
+    suspend fun completeOnboarding(
+        showNumberRow: Boolean,
+        showSecondaryKeys: Boolean,
+        showKeyBorders: Boolean
+    ) {
+        fastCache.edit().putBoolean("setup_completed", true).apply()
+        context.kiebordDataStore.edit { prefs ->
+            prefs[PreferencesKeys.SHOW_NUMBER_ROW] = showNumberRow
+            prefs[PreferencesKeys.SHOW_SECONDARY_KEYS] = showSecondaryKeys
+            prefs[PreferencesKeys.SHOW_KEY_BORDERS] = showKeyBorders
+            prefs[PreferencesKeys.SETUP_COMPLETED] = true
+        }
+    }
+
     suspend fun updateSetupCompleted(completed: Boolean) {
         fastCache.edit().putBoolean("setup_completed", completed).apply()
         context.kiebordDataStore.edit { it[PreferencesKeys.SETUP_COMPLETED] = completed }

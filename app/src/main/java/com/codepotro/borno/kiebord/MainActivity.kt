@@ -1,5 +1,6 @@
 package com.codepotro.borno.kiebord
 
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
@@ -104,6 +105,11 @@ class MainActivity : ComponentActivity() {
         handleIncomingIntent(intent)
         preferencesRepo = KiebordPreferencesRepository.getInstance(this)
         updateImeStatus()
+        if (isImeEnabledState && isImeSelectedState && !preferencesRepo.isSetupCompletedSync()) {
+            lifecycleScope.launch {
+                preferencesRepo.updateSetupCompleted(true)
+            }
+        }
 
         setContent {
             val preferences by preferencesRepo.preferencesFlow.collectAsState(
@@ -185,6 +191,20 @@ class MainActivity : ComponentActivity() {
                             onSwitchIme = {
                                 val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
                                 imm.showInputMethodPicker()
+                            },
+                            onSaveOnboardingLayouts = { enabledLayouts, primaryLayout ->
+                                lifecycleScope.launch {
+                                    preferencesRepo.updateOnboardingLayouts(enabledLayouts, primaryLayout)
+                                }
+                            },
+                            onFinishOnboarding = { showNumRow, showSecondary, showBorders ->
+                                lifecycleScope.launch {
+                                    preferencesRepo.completeOnboarding(
+                                        showNumberRow = showNumRow,
+                                        showSecondaryKeys = showSecondary,
+                                        showKeyBorders = showBorders
+                                    )
+                                }
                             }
                         )
                     }
@@ -268,7 +288,9 @@ class MainActivity : ComponentActivity() {
         isImeEnabledState = enabledMethods.any { it.packageName == packageName }
 
         val defaultIme = Settings.Secure.getString(contentResolver, Settings.Secure.DEFAULT_INPUT_METHOD)
-        isImeSelectedState = defaultIme != null && defaultIme.contains(packageName)
+        val defaultPackage = defaultIme?.let { ComponentName.unflattenFromString(it)?.packageName }
+        isImeSelectedState = defaultPackage == packageName ||
+            (defaultIme != null && (defaultIme == packageName || defaultIme.startsWith("$packageName/")))
     }
 }
 
@@ -289,39 +311,41 @@ fun KiebordSettingsApp(
     pendingDictionaryImportUri: android.net.Uri? = null,
     onClearPendingDictionaryImportUri: () -> Unit = {},
     onOpenSettings: () -> Unit,
-    onSwitchIme: () -> Unit
+    onSwitchIme: () -> Unit,
+    onSaveOnboardingLayouts: (enabledLayouts: Set<String>, primaryLayout: String) -> Unit,
+    onFinishOnboarding: (showNumberRow: Boolean, showSecondaryKeys: Boolean, showKeyBorders: Boolean) -> Unit
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
-    val isSetupFinished = preferences.setupCompleted || preferencesRepo.isSetupCompletedSync()
+    val isSetupFinished = preferences.setupCompleted ||
+        preferencesRepo.isSetupCompletedSync() ||
+        (isImeEnabled && isImeSelected)
 
-    val initialScreen = remember(isSetupFinished) {
+    var currentScreen by remember {
         val target = navigationTarget
             ?: (context as? android.app.Activity)?.intent?.getStringExtra("navigate_to")
             ?: if ((context as? android.app.Activity)?.intent?.action == "com.codepotro.borno.kiebord.action.THEMES") "themes" else null
-        if (target == "layouts") {
-            SettingsScreen.KeyboardLayouts
-        } else if (target == "themes" || target == "appearance" || pendingThemeImportUri != null) {
-            SettingsScreen.AppearanceThemes
-        } else if (target == "extensions" || target == "language_extensions" || target == "languages" || pendingLangPackImportUri != null) {
-            SettingsScreen.LanguageExtensions
-        } else if (target == "backup" || target == "backup_restore" || target == "restore" || pendingClipboardImportUri != null || pendingDictionaryImportUri != null) {
-            SettingsScreen.BackupRestore
-        } else if (target == "clipboard") {
-            SettingsScreen.Clipboard
-        } else if (target == "preferences") {
-            SettingsScreen.Preferences
-        } else if (!isSetupFinished) {
-            SettingsScreen.Onboarding
-        } else {
-            SettingsScreen.Main
+        val initial = when {
+            target == "main" -> SettingsScreen.Main
+            target == "layouts" -> SettingsScreen.KeyboardLayouts
+            target == "themes" || target == "appearance" || pendingThemeImportUri != null -> SettingsScreen.AppearanceThemes
+            target == "extensions" || target == "language_extensions" || target == "languages" || pendingLangPackImportUri != null -> SettingsScreen.LanguageExtensions
+            target == "backup" || target == "backup_restore" || target == "restore" || pendingClipboardImportUri != null || pendingDictionaryImportUri != null -> SettingsScreen.BackupRestore
+            target == "clipboard" -> SettingsScreen.Clipboard
+            target == "preferences" -> SettingsScreen.Preferences
+            !isSetupFinished -> SettingsScreen.Onboarding
+            else -> SettingsScreen.Main
         }
+        mutableStateOf<SettingsScreen>(initial)
     }
-    var currentScreen by remember(initialScreen) { mutableStateOf<SettingsScreen>(initialScreen) }
     var backStack by remember { mutableStateOf<List<SettingsScreen>>(emptyList()) }
 
     LaunchedEffect(navigationTarget) {
         if (navigationTarget != null) {
             when (navigationTarget) {
+                "main" -> {
+                    backStack = emptyList()
+                    currentScreen = SettingsScreen.Main
+                }
                 "themes", "appearance" -> {
                     if (currentScreen != SettingsScreen.AppearanceThemes) {
                         backStack = listOf(SettingsScreen.Main)
@@ -773,11 +797,12 @@ fun KiebordSettingsApp(
                     is SettingsScreen.Onboarding -> {
                         OnboardingScreen(
                             preferences = preferences,
-                            preferencesRepo = preferencesRepo,
                             isImeEnabled = isImeEnabled,
                             isImeSelected = isImeSelected,
                             onOpenSettings = onOpenSettings,
                             onSwitchIme = onSwitchIme,
+                            onSaveLayouts = onSaveOnboardingLayouts,
+                            onFinishOnboarding = onFinishOnboarding,
                             onComplete = {
                                 currentScreen = SettingsScreen.Main
                                 backStack = emptyList()

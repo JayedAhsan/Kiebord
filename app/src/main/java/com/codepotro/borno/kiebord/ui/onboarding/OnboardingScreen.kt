@@ -1,4 +1,4 @@
-﻿package com.codepotro.borno.kiebord.ui.onboarding
+package com.codepotro.borno.kiebord.ui.onboarding
 
 import android.content.Context
 import android.content.Intent
@@ -81,18 +81,17 @@ enum class OnboardingStep {
 @Composable
 fun OnboardingScreen(
     preferences: KiebordPreferences,
-    preferencesRepo: KiebordPreferencesRepository,
     isImeEnabled: Boolean,
     isImeSelected: Boolean,
     onOpenSettings: () -> Unit,
     onSwitchIme: () -> Unit,
+    onSaveLayouts: (enabledLayouts: Set<String>, primaryLayout: String) -> Unit,
+    onFinishOnboarding: (showNumberRow: Boolean, showSecondaryKeys: Boolean, showKeyBorders: Boolean) -> Unit,
     onComplete: () -> Unit,
     onOpenKeyboardLayouts: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    val context = LocalContext.current
     val colors = LocalSettingsColors.current
-    val scope = rememberCoroutineScope()
 
     // Determine starting step based on current system state
     var currentStep by rememberSaveable {
@@ -231,15 +230,7 @@ fun OnboardingScreen(
                             initialEnabledLayouts = preferences.enabledLayoutIds,
                             initialPrimaryLayout = preferences.primaryLayoutId,
                             onNext = { enabledLayouts, primaryLayout ->
-                                scope.launch {
-                                    enabledLayouts.forEach { id ->
-                                        preferencesRepo.toggleLayoutEnabled(id, true)
-                                    }
-                                    (preferences.enabledLayoutIds - enabledLayouts).forEach { id ->
-                                        preferencesRepo.toggleLayoutEnabled(id, false)
-                                    }
-                                    preferencesRepo.updatePrimaryLayoutId(primaryLayout)
-                                }
+                                onSaveLayouts(enabledLayouts, primaryLayout)
                                 navigateToStep(OnboardingStep.PREFERENCES)
                             },
                             onSkip = {
@@ -257,12 +248,7 @@ fun OnboardingScreen(
                             initialShowSecondaryKeys = preferences.showSecondaryKeys,
                             initialShowKeyBorders = preferences.showKeyBorders,
                             onFinish = { showNumRow, showSecondary, showBorders ->
-                                scope.launch {
-                                    preferencesRepo.updateShowNumberRow(showNumRow)
-                                    preferencesRepo.updateShowSecondaryKeys(showSecondary)
-                                    preferencesRepo.updateShowKeyBorders(showBorders)
-                                    preferencesRepo.updateSetupCompleted(true)
-                                }
+                                onFinishOnboarding(showNumRow, showSecondary, showBorders)
                                 onComplete()
                             }
                         )
