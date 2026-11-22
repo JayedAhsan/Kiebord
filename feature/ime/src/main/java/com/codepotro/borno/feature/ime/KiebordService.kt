@@ -97,8 +97,11 @@ class KiebordService : InputMethodService() {
     private var lastKnownSelStart: Int = -1
     private var lastKnownSelEnd: Int = -1
     private var isSpacebarTrackpadActive: Boolean = false
+    private var isDeleteLongPressActive: Boolean = false
     private var suppressRecomposeUntilMs: Long = 0L
     private var cursorMoveRecomposeJob: kotlinx.coroutines.Job? = null
+    private var deleteRecomposeJob: kotlinx.coroutines.Job? = null
+    private var lastDeleteTapTimeMs: Long = 0L
     private val gestureDecoder = CrossLanguageGestureDecoder()
     private var lastGestureCommittedWord: String = ""
     private var isGestureAlternativeActive: Boolean = false
@@ -578,7 +581,15 @@ class KiebordService : InputMethodService() {
                     },
                     onDismissVoiceTyping = { voiceInputManager.stop() },
                     voiceTypingEnabled = preferencesState.voiceTypingEnabled,
-                    onKeyPress = { keyDef -> performKeyFeedback(keyDef) },
+                    onKeyPress = { keyDef ->
+                        if (keyDef.type == KeyType.DELETE) {
+                            deleteRecomposeJob?.cancel()
+                            deleteRecomposeJob = null
+                            cursorMoveRecomposeJob?.cancel()
+                            cursorMoveRecomposeJob = null
+                        }
+                        performKeyFeedback(keyDef)
+                    },
                     onKeyTap = ::handleKeyTap,
                     onKeyLongPress = ::handleKeyLongPress,
                     onTextAction = ::handleTextAction,
@@ -673,6 +684,7 @@ class KiebordService : InputMethodService() {
                     onDeleteSwipeMove = ::handleDeleteSwipeMove,
                     onDeleteSwipeEnd = ::handleDeleteSwipeEnd,
                     onDeleteSwipeCancel = ::handleDeleteSwipeCancel,
+                    onDeleteLongPressEnd = ::handleDeleteLongPressEnd,
                     fastDeleteEnabled = preferencesState.fastDeleteEnabled,
                     selectiveDeleteEnabled = preferencesState.selectiveDeleteEnabled,
                     spacebarSwipeMode = preferencesState.spacebarSwipeMode,
@@ -829,8 +841,12 @@ class KiebordService : InputMethodService() {
         getTransliterationManager().reset()
         clearComposingState()
         isSpacebarTrackpadActive = false
+        isDeleteLongPressActive = false
         cursorMoveRecomposeJob?.cancel()
         cursorMoveRecomposeJob = null
+        deleteRecomposeJob?.cancel()
+        deleteRecomposeJob = null
+        lastDeleteTapTimeMs = 0L
         suppressRecomposeUntilMs = 0L
         lastKnownSelStart = info?.initialSelStart ?: -1
         lastKnownSelEnd = info?.initialSelEnd ?: -1
@@ -874,7 +890,16 @@ class KiebordService : InputMethodService() {
                 InputModeResolver.isDirectCommit(info) ||
                 PredefinedLayouts.isNumberLayout(activeLayout.id)
 
+        if (isDeleteLongPressActive) {
+            if (candidatesStart >= 0 && candidatesEnd > candidatesStart) {
+                ic?.finishComposingText()
+            }
+            return
+        }
         if (isSpacebarTrackpadActive || SystemClock.uptimeMillis() < suppressRecomposeUntilMs) {
+            if (composingBuffer.isEmpty() && !translitMgr.isComposing && candidatesStart >= 0 && candidatesEnd > candidatesStart) {
+                ic?.finishComposingText()
+            }
             return
         }
 
@@ -1030,8 +1055,12 @@ class KiebordService : InputMethodService() {
 
     override fun onFinishInputView(finishingInput: Boolean) {
         isSpacebarTrackpadActive = false
+        isDeleteLongPressActive = false
         cursorMoveRecomposeJob?.cancel()
         cursorMoveRecomposeJob = null
+        deleteRecomposeJob?.cancel()
+        deleteRecomposeJob = null
+        lastDeleteTapTimeMs = 0L
         suppressRecomposeUntilMs = 0L
         finishComposing()
         lastKnownSelStart = -1
@@ -1239,6 +1268,7 @@ class KiebordService : InputMethodService() {
         selStart: Int? = null,
         selEnd: Int? = null
     ): Boolean {
+        if (isDeleteLongPressActive || isSpacebarTrackpadActive || SystemClock.uptimeMillis() < suppressRecomposeUntilMs) return false
         if (ic == null || !isComposingAllowedForCurrentEditor()) return false
         if (selStart != null && selEnd != null && selStart != selEnd) return false
         if (selStart == null || selEnd == null) {
@@ -1421,8 +1451,11 @@ class KiebordService : InputMethodService() {
 
     private fun handleKeyTap(key: KeyDef) {
         isSpacebarTrackpadActive = false
+        isDeleteLongPressActive = false
         cursorMoveRecomposeJob?.cancel()
         cursorMoveRecomposeJob = null
+        deleteRecomposeJob?.cancel()
+        deleteRecomposeJob = null
         suppressRecomposeUntilMs = 0L
         if (::voiceInputManager.isInitialized && voiceInputManager.isListening) {
             voiceInputManager.stop()
@@ -1432,6 +1465,7 @@ class KiebordService : InputMethodService() {
         if (key.type != KeyType.DELETE) {
             lastGestureCommittedWord = ""
             isGestureAlternativeActive = false
+            lastDeleteTapTimeMs = 0L
         }
         if (key.type != KeyType.SPACE) {
             lastSpaceTapTime = 0L
@@ -1739,6 +1773,7 @@ class KiebordService : InputMethodService() {
                         composingCursorOffset
                     )
                     if (deletion != null) {
+                        lastDeleteTapTimeMs = SystemClock.uptimeMillis()
                         val (updated, newOffset) = deletion
                         syncComposingTextToEditor(ic, updated, newOffset)
                         if (PredefinedLayouts.isBornoEasy(activeLayout.id)) {
@@ -1755,6 +1790,10 @@ class KiebordService : InputMethodService() {
                     finishComposing()
                 }
 
+                val nowMs = SystemClock.uptimeMillis()
+                val isRapidDeleteTap = (nowMs - lastDeleteTapTimeMs) < 180L
+                lastDeleteTapTimeMs = nowMs
+
                 val textBefore = ic.getTextBeforeCursor(16, 0)
                 val deleteLen = if (!textBefore.isNullOrEmpty()) EmojiSearchCatalog.getDeleteLengthBeforeCursor(textBefore) else 1
                 val deleted = ic.deleteSurroundingText(deleteLen, 0)
@@ -1765,15 +1804,36 @@ class KiebordService : InputMethodService() {
                 if (!deleted && (InputModeResolver.isDirectCommit(editorInfo) || editorInfo?.inputType == InputType.TYPE_NULL)) {
                     sendNavKeyEvent(ic, KeyEvent.KEYCODE_DEL, isSelecting = false)
                 }
-                if (PredefinedLayouts.isBornoEasy(activeLayout.id)) {
-                    val before = ic.getTextBeforeCursor(10, 0)?.toString() ?: ""
-                    updateBornoEasyStateFromText(before)
+                if (isRapidDeleteTap) {
+                    activeSuggestions = emptyList()
+                    suppressRecomposeUntilMs = nowMs + 180L
+                    deleteRecomposeJob?.cancel()
+                    deleteRecomposeJob = serviceScope.launch {
+                        kotlinx.coroutines.delay(180L)
+                        if (isDeleteLongPressActive) return@launch
+                        suppressRecomposeUntilMs = 0L
+                        val currentIc = currentInputConnection ?: return@launch
+                        if (PredefinedLayouts.isBornoEasy(activeLayout.id)) {
+                            val before = currentIc.getTextBeforeCursor(10, 0)?.toString() ?: ""
+                            updateBornoEasyStateFromText(before)
+                        }
+                        val recomposed = recomposeWordAtCursor(currentIc, lastKnownSelStart, lastKnownSelEnd)
+                        if (shiftState != ShiftState.CAPS_LOCK) {
+                            updateAutoCapitalizationState()
+                        }
+                        updateSuggestions(knownNotInWord = !recomposed)
+                    }
+                } else {
+                    if (PredefinedLayouts.isBornoEasy(activeLayout.id)) {
+                        val before = ic.getTextBeforeCursor(10, 0)?.toString() ?: ""
+                        updateBornoEasyStateFromText(before)
+                    }
+                    val recomposed = recomposeWordAtCursor(ic)
+                    if (shiftState != ShiftState.CAPS_LOCK) {
+                        updateAutoCapitalizationState()
+                    }
+                    updateSuggestions(knownNotInWord = !recomposed)
                 }
-                val recomposed = recomposeWordAtCursor(ic)
-                if (shiftState != ShiftState.CAPS_LOCK) {
-                    updateAutoCapitalizationState()
-                }
-                updateSuggestions(knownNotInWord = !recomposed)
             }
             KeyType.ACTION -> {
                 finishComposing()
@@ -2156,53 +2216,85 @@ class KiebordService : InputMethodService() {
     private fun handleLongPressDelete() {
         val ic = currentInputConnection ?: return
 
-        // 1. If text is highlighted / selected, delete the whole selection first
-        val selectedText = ic.getSelectedText(0)
-        if (!selectedText.isNullOrEmpty()) {
-            ic.commitText("", 1)
-            updateSuggestions()
-            return
-        }
+        val editorInfo = currentEditorInfoState ?: currentInputEditorInfo
+        ic.beginBatchEdit()
+        try {
+            if (!isDeleteLongPressActive) {
+                isDeleteLongPressActive = true
+                cursorMoveRecomposeJob?.cancel()
+                cursorMoveRecomposeJob = null
+                deleteRecomposeJob?.cancel()
+                deleteRecomposeJob = null
+                suppressRecomposeUntilMs = 0L
+            }
 
-        // 2. Gesture-committed word
-        if (lastGestureCommittedWord.isNotEmpty()) {
-            ic.deleteSurroundingText(lastGestureCommittedWord.length, 0)
-            lastGestureCommittedWord = ""
-            updateSuggestions()
-            return
-        }
-
-        // 3. Active transliteration composing
-        if (isTransliterationLayout()) {
+            // Always ensure no composing buffer or editor underline remains while hold-deleting
             val translitMgr = getTransliterationManager()
             if (translitMgr.isComposing) {
-                translitMgr.handleDelete()
-                updateSuggestions()
+                translitMgr.reset()
+            }
+            if (composingBuffer.isNotEmpty()) {
+                if (composingBuffer.contains("\u200B")) {
+                    ic.setComposingText(BengaliBstiEngine.cleanPending(composingBuffer.toString()), 1)
+                }
+                clearComposingState()
+            }
+            ic.finishComposingText()
+            if (activeSuggestions.isNotEmpty()) {
+                activeSuggestions = emptyList()
+            }
+
+            // 1. If text is highlighted / selected, delete the whole selection first
+            val selectedText = ic.getSelectedText(0)
+            if (!selectedText.isNullOrEmpty()) {
+                ic.commitText("", 1)
                 return
             }
-        }
 
-        // 4. Standard composing buffer
-        if (composingBuffer.isNotEmpty()) {
-            val deletion = ComposingWordUtils.deleteBeforeCursor(
-                composingBuffer.toString(),
-                composingCursorOffset
-            )
-            if (deletion != null) {
-                val (updated, newOffset) = deletion
-                syncComposingTextToEditor(ic, updated, newOffset)
-                updateSuggestions()
+            // 2. Gesture-committed word
+            if (lastGestureCommittedWord.isNotEmpty()) {
+                ic.deleteSurroundingText(lastGestureCommittedWord.length, 0)
+                lastGestureCommittedWord = ""
+                isGestureAlternativeActive = false
                 return
             }
-            finishComposing()
-        }
 
-        // 5. Normal continuous deletion
-        val textBefore = ic.getTextBeforeCursor(16, 0)
-        val deleteLen = if (!textBefore.isNullOrEmpty()) EmojiSearchCatalog.getDeleteLengthBeforeCursor(textBefore) else 1
-        ic.deleteSurroundingText(deleteLen, 0)
-        recomposeWordAtCursor(ic)
-        updateSuggestions()
+            // 3. Direct, composing-free continuous deletion (no setComposingRegion / setComposingText / suggestions)
+            val textBefore = ic.getTextBeforeCursor(16, 0)
+            val deleteLen = if (!textBefore.isNullOrEmpty()) EmojiSearchCatalog.getDeleteLengthBeforeCursor(textBefore) else 1
+            val deleted = ic.deleteSurroundingText(deleteLen, 0)
+            if (deleted && lastKnownSelStart >= 0 && lastKnownSelStart == lastKnownSelEnd) {
+                lastKnownSelStart = (lastKnownSelStart - deleteLen).coerceAtLeast(0)
+                lastKnownSelEnd = lastKnownSelStart
+            }
+            if (!deleted && (InputModeResolver.isDirectCommit(editorInfo) || editorInfo?.inputType == InputType.TYPE_NULL)) {
+                sendNavKeyEvent(ic, KeyEvent.KEYCODE_DEL, isSelecting = false)
+            }
+        } finally {
+            ic.endBatchEdit()
+        }
+    }
+
+    private fun handleDeleteLongPressEnd() {
+        if (!isDeleteLongPressActive) return
+        isDeleteLongPressActive = false
+        suppressRecomposeUntilMs = SystemClock.uptimeMillis() + 250L
+        deleteRecomposeJob?.cancel()
+        deleteRecomposeJob = serviceScope.launch {
+            kotlinx.coroutines.delay(250L)
+            if (isDeleteLongPressActive) return@launch
+            suppressRecomposeUntilMs = 0L
+            val ic = currentInputConnection ?: return@launch
+            ic.finishComposingText()
+            if (PredefinedLayouts.isBornoEasy(activeLayout.id)) {
+                val before = ic.getTextBeforeCursor(10, 0)?.toString() ?: ""
+                updateBornoEasyStateFromText(before)
+            }
+            if (shiftState != ShiftState.CAPS_LOCK) {
+                updateAutoCapitalizationState()
+            }
+            activeSuggestions = emptyList()
+        }
     }
 
     private fun isTransliterableChar(text: String): Boolean {

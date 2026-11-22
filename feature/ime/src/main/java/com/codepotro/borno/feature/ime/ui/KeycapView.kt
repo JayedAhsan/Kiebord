@@ -123,6 +123,7 @@ fun KeycapView(
     onDeleteSwipeMove: (Float) -> Unit = {},
     onDeleteSwipeEnd: () -> Unit = {},
     onDeleteSwipeCancel: () -> Unit = {},
+    onDeleteLongPressEnd: () -> Unit = {},
     fastDeleteEnabled: Boolean = false,
     selectiveDeleteEnabled: Boolean = true,
     spacebarSwipeMode: String = KiebordPreferences.SPACEBAR_MODE_SWIPE_LAYOUT_HOLD_CURSOR,
@@ -199,6 +200,7 @@ fun KeycapView(
     val currentOnDeleteSwipeMove = rememberUpdatedState(onDeleteSwipeMove)
     val currentOnDeleteSwipeEnd = rememberUpdatedState(onDeleteSwipeEnd)
     val currentOnDeleteSwipeCancel = rememberUpdatedState(onDeleteSwipeCancel)
+    val currentOnDeleteLongPressEnd = rememberUpdatedState(onDeleteLongPressEnd)
     val currentFastDeleteEnabled = rememberUpdatedState(fastDeleteEnabled)
     val currentSelectiveDeleteEnabled = rememberUpdatedState(selectiveDeleteEnabled)
     val currentSpacebarSwipeMode = rememberUpdatedState(spacebarSwipeMode)
@@ -386,7 +388,7 @@ fun KeycapView(
                                     }
                                 }
 
-                                if (!isFastDeleteArmed && currentSelectiveDeleteEnabled.value) {
+                                if (!isFastDeleteArmed && !isDeleteLongPressActive && currentSelectiveDeleteEnabled.value) {
                                     if (delta.x < -14f) {
                                         if (!isDeleteSwipeActive) {
                                             isDeleteSwipeActive = true
@@ -570,6 +572,10 @@ fun KeycapView(
                                 if (isSpacebarTrackpadActive) {
                                     isSpacebarTrackpadActive = false
                                     currentOnSpacebarTrackpadEnd.value()
+                                }
+                                if (isDeleteLongPressActive) {
+                                    isDeleteLongPressActive = false
+                                    currentOnDeleteLongPressEnd.value()
                                 }
                                 if (isGestureTyping && !gestureEnded) {
                                     gestureEnded = true
