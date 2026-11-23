@@ -1454,13 +1454,21 @@ class PredefinedLayoutsTest {
         ).firstOrNull { it.exists() }
         org.junit.Assert.assertNull("bn_unijoy.json must not be bundled in assets/layouts/ (it ships in unijoy.bornolang)", legacyAsset)
 
-        // Verify bundled .bornolang extension archive in APK assets
-        val extFile = listOf(
+        // Unijoy must not be bundled in APK assets/extensions/ (downloaded on demand via Language Extensions)
+        val bundledExtFile = listOf(
             java.io.File("../../feature/ime/src/main/assets/extensions/unijoy.bornolang"),
             java.io.File("feature/ime/src/main/assets/extensions/unijoy.bornolang"),
             java.io.File("../feature/ime/src/main/assets/extensions/unijoy.bornolang")
         ).firstOrNull { it.exists() }
-        assertNotNull("unijoy.bornolang must be bundled in APK assets/extensions/", extFile)
+        org.junit.Assert.assertNull("unijoy.bornolang must not be bundled in APK assets/extensions/ (install on demand)", bundledExtFile)
+
+        // Verify downloadable .bornolang extension archive in language-packs/releases/
+        val extFile = listOf(
+            java.io.File("../../language-packs/releases/unijoy.bornolang"),
+            java.io.File("language-packs/releases/unijoy.bornolang"),
+            java.io.File("../language-packs/releases/unijoy.bornolang")
+        ).firstOrNull { it.exists() }
+        assertNotNull("unijoy.bornolang must exist in language-packs/releases/", extFile)
 
         java.util.zip.ZipFile(extFile!!).use { zip ->
             val manifestEntry = zip.getEntry("pack.json")
