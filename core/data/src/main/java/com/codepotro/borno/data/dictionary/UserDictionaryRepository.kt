@@ -64,8 +64,8 @@ class UserDictionaryRepository internal constructor(private val baseDir: File) {
     /**
      * Records a committed, selected, or user-typed word to update frequencies and bigram pairs.
      * All in-memory updates complete instantaneously; disk writes are debounced and asynchronous.
-     * Single-occurrence words are kept in memory as transient candidates and are only promoted
-     * to learned status upon reaching MIN_LEARN_OCCURRENCES (>= 2).
+     * Words below MIN_LEARN_OCCURRENCES (< 4) are kept in memory as transient candidates and are only promoted
+     * to learned status upon reaching MIN_LEARN_OCCURRENCES (>= 4).
      */
     fun recordWord(word: String, prevWord: String? = null, isGesture: Boolean = false) {
         val cleanWord = word.trim()
@@ -116,7 +116,7 @@ class UserDictionaryRepository internal constructor(private val baseDir: File) {
         }
 
         // Performance optimization: only schedule disk save if the word or bigram has reached
-        // the minimum learning threshold (>= 2 occurrences). Single-occurrence words are kept
+        // the minimum learning threshold (>= 4 occurrences). Words below the threshold are kept
         // in memory as transient candidates to avoid disk writes and CPU wakeups.
         if (newWordCount >= MIN_LEARN_OCCURRENCES || newBigramCount >= MIN_LEARN_OCCURRENCES || newGestureCount >= MIN_LEARN_OCCURRENCES) {
             if (newWordCount >= MIN_LEARN_OCCURRENCES || newGestureCount >= MIN_LEARN_OCCURRENCES) {
@@ -159,7 +159,7 @@ class UserDictionaryRepository internal constructor(private val baseDir: File) {
 
     /**
      * Predicts learned subsequent words following [prevWord], sorted descending by learned frequency.
-     * Only returns words meeting MIN_LEARN_OCCURRENCES (>= 2) and MIN_LEARN_LENGTH (>= 3).
+     * Only returns words meeting MIN_LEARN_OCCURRENCES (>= 4) and MIN_LEARN_LENGTH (>= 3).
      * Guaranteed zero-allocation, sub-millisecond in-memory lookup.
      */
     fun getNextWords(prevWord: String, limit: Int = 5, filter: ((String) -> Boolean)? = null): List<String> {
@@ -182,7 +182,7 @@ class UserDictionaryRepository internal constructor(private val baseDir: File) {
 
     /**
      * Retrieves learned words matching [prefix], sorted descending by usage frequency.
-     * Only returns words meeting MIN_LEARN_OCCURRENCES (>= 2) and MIN_LEARN_LENGTH (>= 3).
+     * Only returns words meeting MIN_LEARN_OCCURRENCES (>= 4) and MIN_LEARN_LENGTH (>= 3).
      * Enables frequently typed custom words to appear in suggestion strip.
      */
     fun getCompletions(prefix: String, limit: Int = 5, filter: ((String) -> Boolean)? = null): List<String> {
@@ -213,7 +213,7 @@ class UserDictionaryRepository internal constructor(private val baseDir: File) {
 
     /**
      * Returns frequently gesture-committed words for boosting in gesture decoding.
-     * Only includes words meeting MIN_LEARN_OCCURRENCES (>= 2) and MIN_LEARN_LENGTH (>= 3).
+     * Only includes words meeting MIN_LEARN_OCCURRENCES (>= 4) and MIN_LEARN_LENGTH (>= 3).
      */
     fun getLearnedGestureWords(limit: Int = 20): List<String> {
         return gestureWords.entries
@@ -226,7 +226,7 @@ class UserDictionaryRepository internal constructor(private val baseDir: File) {
     }
 
     /**
-     * Checks if a word exists as a verified learned word (>= 2 occurrences, >= 3 characters).
+     * Checks if a word exists as a verified learned word (>= 4 occurrences, >= 3 characters).
      */
     fun isLearned(word: String): Boolean {
         val clean = word.trim()
@@ -262,7 +262,7 @@ class UserDictionaryRepository internal constructor(private val baseDir: File) {
     }
 
     /**
-     * Retrieves all verified learned words (typed or gestured at least 2 times, length >= 3), sorted descending by usage.
+     * Retrieves all verified learned words (typed or gestured at least 4 times, length >= 3), sorted descending by usage.
      */
     fun getAllLearnedWords(limit: Int = 100): List<String> {
         val combined = HashMap<String, Int>()
@@ -424,7 +424,7 @@ class UserDictionaryRepository internal constructor(private val baseDir: File) {
 
     companion object {
         const val MIN_LEARN_LENGTH = 3
-        const val MIN_LEARN_OCCURRENCES = 2
+        const val MIN_LEARN_OCCURRENCES = 4
         private const val MAX_WORD_LENGTH = 64
         private const val MAX_UNIGRAMS = 4000
         private const val MAX_BIGRAM_PREVS = 3000

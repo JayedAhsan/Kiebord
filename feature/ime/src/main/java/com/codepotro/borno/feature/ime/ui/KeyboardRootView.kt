@@ -127,6 +127,7 @@ import com.codepotro.borno.feature.ime.ui.textedit.TextAction
 import com.codepotro.borno.feature.ime.ui.textedit.TextEditPanelView
 import com.codepotro.borno.feature.ime.ui.suggestion.ExpandedSuggestionsPanelView
 import com.codepotro.borno.feature.ime.ui.suggestion.SuggestionCandidate
+import com.codepotro.borno.feature.ime.ui.suggestion.SuggestionLongPressDialog
 import com.codepotro.borno.feature.ime.ui.suggestion.SuggestionStripView
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -293,8 +294,7 @@ fun KeyboardRootView(
     var lastPredictTimeMs by remember { mutableStateOf(0L) }
 
     var isLanguagePickerOpen by remember { mutableStateOf(false) }
-    var unlearnCandidateTarget by remember { mutableStateOf<SuggestionCandidate?>(null) }
-    var setMappingCandidateTarget by remember { mutableStateOf<SuggestionCandidate?>(null) }
+    var longPressedCandidateTarget by remember { mutableStateOf<SuggestionCandidate?>(null) }
     var isEditingExistingMapping by remember { mutableStateOf(false) }
     var isSpacebarSwiping by remember { mutableStateOf(false) }
     var spacebarSwipeDeltaX by remember { mutableFloatStateOf(0f) }
@@ -1414,14 +1414,9 @@ fun KeyboardRootView(
                                 onCandidateSelect(candidate)
                             },
                             onCandidateLongClick = { candidate ->
-                                if (candidate.text.isNotBlank() && hasPersonalMapping(candidate.text)) {
-                                    isEditingExistingMapping = true
-                                    setMappingCandidateTarget = candidate
-                                } else if (candidate.isLearned) {
-                                    unlearnCandidateTarget = candidate
-                                } else if (candidate.text.isNotBlank()) {
-                                    isEditingExistingMapping = false
-                                    setMappingCandidateTarget = candidate
+                                if (candidate.text.isNotBlank()) {
+                                    isEditingExistingMapping = hasPersonalMapping(candidate.text)
+                                    longPressedCandidateTarget = candidate
                                 }
                             },
                             mode = suggestionBarMode,
@@ -2485,14 +2480,9 @@ fun KeyboardRootView(
                         onCandidateSelect(candidate)
                     },
                     onCandidateLongClick = { candidate ->
-                        if (candidate.text.isNotBlank() && hasPersonalMapping(candidate.text)) {
-                            isEditingExistingMapping = true
-                            setMappingCandidateTarget = candidate
-                        } else if (candidate.isLearned) {
-                            unlearnCandidateTarget = candidate
-                        } else if (candidate.text.isNotBlank()) {
-                            isEditingExistingMapping = false
-                            setMappingCandidateTarget = candidate
+                        if (candidate.text.isNotBlank()) {
+                            isEditingExistingMapping = hasPersonalMapping(candidate.text)
+                            longPressedCandidateTarget = candidate
                         }
                     },
                     onDelete = {
@@ -2960,35 +2950,24 @@ fun KeyboardRootView(
             )
         }
 
-        // 7. Unlearn Learned Word Confirmation Dialog
-        if (unlearnCandidateTarget != null) {
-            val candidateToUnlearn = unlearnCandidateTarget!!
-            UnlearnWordConfirmationDialog(
-                word = candidateToUnlearn.text,
-                onConfirm = {
-                    onUnlearnWord(candidateToUnlearn.text)
-                    unlearnCandidateTarget = null
+        // 7. Suggestion Long-Press Action Dialog (Set/Edit Mapping & Remove Word for learned words)
+        if (longPressedCandidateTarget != null) {
+            val candidate = longPressedCandidateTarget!!
+            SuggestionLongPressDialog(
+                word = candidate.text,
+                isLearned = candidate.isLearned,
+                hasMapping = isEditingExistingMapping,
+                onSetMapping = {
+                    onSetMapping(candidate.text)
+                    longPressedCandidateTarget = null
                     performHaptic(HapticFeedbackType.LongPress)
                 },
-                onDismiss = { unlearnCandidateTarget = null },
-                modifier = Modifier
-                    .padding(top = popupHeadroomDp)
-                    .matchParentSize()
-            )
-        }
-
-        // 7b. Set / Edit Personal Dictionary Mapping Dialog
-        if (setMappingCandidateTarget != null) {
-            val candidateToMap = setMappingCandidateTarget!!
-            SetMappingConfirmationDialog(
-                word = candidateToMap.text,
-                isEdit = isEditingExistingMapping,
-                onConfirm = {
-                    onSetMapping(candidateToMap.text)
-                    setMappingCandidateTarget = null
+                onRemoveWord = {
+                    onUnlearnWord(candidate.text)
+                    longPressedCandidateTarget = null
                     performHaptic(HapticFeedbackType.LongPress)
                 },
-                onDismiss = { setMappingCandidateTarget = null },
+                onDismiss = { longPressedCandidateTarget = null },
                 modifier = Modifier
                     .padding(top = popupHeadroomDp)
                     .matchParentSize()
@@ -3353,219 +3332,6 @@ fun GestureTrailOverlay(
             radius = headWidthPx / 2f,
             center = headPoint
         )
-    }
-}
-
-/**
- * Confirmation dialog popup shown when a learned suggestion candidate is long-pressed,
- * prompting the user to unlearn and remove it from the personalized dictionary.
- */
-@Composable
-fun UnlearnWordConfirmationDialog(
-    word: String,
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val colorScheme = KiebordTheme.colorScheme
-
-    Box(
-        modifier = modifier
-            .background(androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.55f))
-            .clickable(
-                interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
-                indication = null
-            ) { onDismiss() },
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            modifier = Modifier
-                .width(280.dp)
-                .clip(RoundedCornerShape(16.dp))
-                .background(colorScheme.containerBackground)
-                .clickable(
-                    interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
-                    indication = null
-                ) {} // consume touch events
-                .padding(20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = "Remove learned word?",
-                color = colorScheme.keyForeground,
-                fontSize = 17.sp,
-                fontWeight = FontWeight.SemiBold,
-                fontFamily = KiebordTheme.fontFamily,
-                textAlign = TextAlign.Center
-            )
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            Text(
-                text = "Do you want to remove \"$word\" from your learned suggestions?",
-                color = colorScheme.keyForeground.copy(alpha = 0.8f),
-                fontSize = 14.sp,
-                fontFamily = KiebordTheme.fontFamily,
-                textAlign = TextAlign.Center,
-                lineHeight = 19.sp
-            )
-
-            Spacer(modifier = Modifier.height(18.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
-                        .clickable { onDismiss() }
-                        .padding(horizontal = 14.dp, vertical = 8.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "Cancel",
-                        color = colorScheme.keyForeground.copy(alpha = 0.7f),
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium,
-                        fontFamily = KiebordTheme.fontFamily
-                    )
-                }
-
-                Spacer(modifier = Modifier.width(8.dp))
-
-                val removeBtnFg = ThemeColorUtils.ensureContrast(
-                    foreground = colorScheme.actionKeyForeground,
-                    background = colorScheme.accentColor,
-                    minContrast = 4.0f
-                )
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(colorScheme.accentColor)
-                        .clickable { onConfirm() }
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "Remove",
-                        color = removeBtnFg,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        fontFamily = KiebordTheme.fontFamily
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun SetMappingConfirmationDialog(
-    word: String,
-    isEdit: Boolean,
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val colorScheme = KiebordTheme.colorScheme
-    val titleText = if (isEdit) "Edit Mapping" else "Set Mapping"
-    val bodyText = if (isEdit) {
-        "Edit the shortcut mapping for \"$word\" in Personal Dictionary?"
-    } else {
-        "Add a shortcut mapping for \"$word\" in Personal Dictionary?"
-    }
-
-    Box(
-        modifier = modifier
-            .background(androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.55f))
-            .clickable(
-                interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
-                indication = null
-            ) { onDismiss() },
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            modifier = Modifier
-                .width(280.dp)
-                .clip(RoundedCornerShape(16.dp))
-                .background(colorScheme.containerBackground)
-                .clickable(
-                    interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
-                    indication = null
-                ) {}
-                .padding(20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = titleText,
-                color = colorScheme.keyForeground,
-                fontSize = 17.sp,
-                fontWeight = FontWeight.SemiBold,
-                fontFamily = KiebordTheme.fontFamily,
-                textAlign = TextAlign.Center
-            )
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            Text(
-                text = bodyText,
-                color = colorScheme.keyForeground.copy(alpha = 0.8f),
-                fontSize = 14.sp,
-                fontFamily = KiebordTheme.fontFamily,
-                textAlign = TextAlign.Center,
-                lineHeight = 19.sp
-            )
-
-            Spacer(modifier = Modifier.height(18.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
-                        .clickable { onDismiss() }
-                        .padding(horizontal = 14.dp, vertical = 8.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "Cancel",
-                        color = colorScheme.keyForeground.copy(alpha = 0.7f),
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium,
-                        fontFamily = KiebordTheme.fontFamily
-                    )
-                }
-
-                Spacer(modifier = Modifier.width(8.dp))
-
-                val confirmBtnFg = ThemeColorUtils.ensureContrast(
-                    foreground = colorScheme.actionKeyForeground,
-                    background = colorScheme.accentColor,
-                    minContrast = 4.0f
-                )
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(colorScheme.accentColor)
-                        .clickable { onConfirm() }
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = titleText,
-                        color = confirmBtnFg,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        fontFamily = KiebordTheme.fontFamily
-                    )
-                }
-            }
-        }
     }
 }
 
