@@ -35,8 +35,9 @@
     "author": "Md. Rifat Hasan Jihan",
     "description": "Unijoy fixed Bangla keyboard layout",
     "downloadUrl": "https://raw.githubusercontent.com/JayedAhsan/Kiebord/main/language-packs/releases/unijoy.bornolang",
-    "sha256": "83fbbae131b1fc9fe97e32e4dc913efc2968234310fca46a8c4c4cd0f381d383",
-    "sizeBytes": 2318,
-    "hasDictionary": false
+    "sha256": "7d14bc1055db4fddb11e2ec223e29358c9da50141b1cec9a6ee21686469869dd",
+    "sizeBytes": 2476,
+    "hasDictionary": false,
+    "credit": "Original Unijoy Bangla Unicode layout by Ekushey (https://ekushey.org)"
   }
 ]

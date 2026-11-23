@@ -5,6 +5,8 @@
   "locale": "bn-BD",
   "displayName": "Unijoy Layout",
   "author": "Md. Rifat Hasan Jihan",
+  "credit": "Original Unijoy Bangla Unicode layout by Ekushey (https://ekushey.org)",
+  "license": "MIT",
   "description": "Unijoy fixed Bangla keyboard layout",
   "layouts": [
     "bn_unijoy"
