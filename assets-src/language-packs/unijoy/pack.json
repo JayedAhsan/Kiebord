@@ -1,0 +1,12 @@
+{
+  "id": "unijoy",
+  "version": 1,
+  "language": "bn",
+  "locale": "bn-BD",
+  "displayName": "Unijoy Layout",
+  "author": "Md. Rifat Hasan Jihan",
+  "description": "Unijoy fixed Bangla keyboard layout",
+  "layouts": [
+    "bn_unijoy"
+  ]
+}

@@ -38,7 +38,7 @@ Kiebord comes with the essential features you need for everyday typing, without 
 
 | Language | Layouts |
 |---|---|
-| Bangla | Borno Phonetic, Avro Phonetic, Borno Easy, National (BSTI), Probhat, Khipro |
+| Bangla | Borno Phonetic, Avro Phonetic, Borno Easy, National (BSTI), Probhat, Khipro, Unijoy |
 | English | QWERTY, Borno Math |
 | Arabic | Arabic (with dedicated Harakat / diacritics row) |
 | Turkish *(Extension)* | Türkçe (Q), Türkçe (Compact), Türkçe (F) |

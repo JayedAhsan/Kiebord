@@ -1413,19 +1413,75 @@ class PredefinedLayoutsTest {
             assertTrue(takaKey.moreKeys.contains("$"))
         }
 
-        // 4. Verify bn_unijoy.json symbols layout
+        // 4. Verify bn_unijoy.json symbols layout (shipped as the unijoy extension pack)
         val unijoyFile = listOf(
-            java.io.File("../../feature/ime/src/main/assets/layouts/bn_unijoy.json"),
-            java.io.File("feature/ime/src/main/assets/layouts/bn_unijoy.json"),
-            java.io.File("../feature/ime/src/main/assets/layouts/bn_unijoy.json")
+            java.io.File("../../assets-src/language-packs/unijoy/layouts/bn_unijoy.json"),
+            java.io.File("assets-src/language-packs/unijoy/layouts/bn_unijoy.json"),
+            java.io.File("../assets-src/language-packs/unijoy/layouts/bn_unijoy.json")
         ).firstOrNull { it.exists() }
-        assertNotNull("bn_unijoy.json must exist", unijoyFile)
+        assertNotNull("bn_unijoy.json must exist in assets-src/language-packs/unijoy/layouts/", unijoyFile)
         val unijoyLayout = kotlinx.serialization.json.Json { ignoreUnknownKeys = true }.decodeFromString<com.codepotro.borno.common.model.KeyboardLayoutDef>(unijoyFile!!.readText())
         val unijoySym = unijoyLayout.symbolsLayout
         assertNotNull(unijoySym)
         assertEquals(expectedBnDigits, unijoySym!!.rows[0].keys.map { it.label })
         val unijoyTakaKey = unijoySym.rows[1].keys[2]
         assertEquals("৳", unijoyTakaKey.label)
+    }
+
+    @Test
+    fun testUnijoyExtensionPackIntegrity() {
+        val json = kotlinx.serialization.json.Json { ignoreUnknownKeys = true }
+
+        val layoutFile = listOf(
+            java.io.File("../../assets-src/language-packs/unijoy/layouts/bn_unijoy.json"),
+            java.io.File("assets-src/language-packs/unijoy/layouts/bn_unijoy.json"),
+            java.io.File("../assets-src/language-packs/unijoy/layouts/bn_unijoy.json")
+        ).firstOrNull { it.exists() }
+        assertNotNull("bn_unijoy.json must exist in assets-src/language-packs/unijoy/layouts/", layoutFile)
+
+        val layout = json.decodeFromString<com.codepotro.borno.common.model.KeyboardLayoutDef>(layoutFile!!.readText())
+        assertEquals("bn_unijoy", layout.id)
+        assertEquals("Unijoy", layout.name)
+        assertEquals("bn", layout.language)
+        assertEquals("bn_fixed", layout.processor)
+        assertEquals(4, layout.rows.size)
+
+        // Unijoy must no longer ship as a plain bundled layout asset
+        val legacyAsset = listOf(
+            java.io.File("../../feature/ime/src/main/assets/layouts/bn_unijoy.json"),
+            java.io.File("feature/ime/src/main/assets/layouts/bn_unijoy.json"),
+            java.io.File("../feature/ime/src/main/assets/layouts/bn_unijoy.json")
+        ).firstOrNull { it.exists() }
+        org.junit.Assert.assertNull("bn_unijoy.json must not be bundled in assets/layouts/ (it ships in unijoy.bornolang)", legacyAsset)
+
+        // Verify bundled .bornolang extension archive in APK assets
+        val extFile = listOf(
+            java.io.File("../../feature/ime/src/main/assets/extensions/unijoy.bornolang"),
+            java.io.File("feature/ime/src/main/assets/extensions/unijoy.bornolang"),
+            java.io.File("../feature/ime/src/main/assets/extensions/unijoy.bornolang")
+        ).firstOrNull { it.exists() }
+        assertNotNull("unijoy.bornolang must be bundled in APK assets/extensions/", extFile)
+
+        java.util.zip.ZipFile(extFile!!).use { zip ->
+            val manifestEntry = zip.getEntry("pack.json")
+            assertNotNull("pack.json must exist in unijoy.bornolang", manifestEntry)
+            val manifest = json.decodeFromString<com.codepotro.borno.data.langpack.LanguagePackMetadata>(
+                zip.getInputStream(manifestEntry).bufferedReader(Charsets.UTF_8).readText()
+            )
+            assertEquals("unijoy", manifest.id)
+            assertEquals("bn", manifest.language)
+            assertEquals(listOf("bn_unijoy"), manifest.layouts)
+
+            val layoutEntry = zip.getEntry("layouts/bn_unijoy.json")
+            assertNotNull("bn_unijoy.json must exist in unijoy.bornolang", layoutEntry)
+            val packedLayout = json.decodeFromString<com.codepotro.borno.common.model.KeyboardLayoutDef>(
+                zip.getInputStream(layoutEntry).bufferedReader(Charsets.UTF_8).readText()
+            )
+            assertEquals("Packed layout must match the pack source", layout, packedLayout)
+
+            val entries = zip.entries().asSequence().map { it.name }.toList()
+            assertFalse("unijoy.bornolang must not contain a dictionary", entries.any { it.startsWith("dictionaries/") || it.endsWith(".dict") })
+        }
     }
 
     @Test
