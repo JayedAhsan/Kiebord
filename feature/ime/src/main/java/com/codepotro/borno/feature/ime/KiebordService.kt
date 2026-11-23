@@ -17,6 +17,7 @@ import android.view.HapticFeedbackConstants
 import android.view.KeyEvent
 import android.view.View
 import android.view.Window
+import android.view.WindowManager
 import android.text.InputType
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.ExtractedTextRequest
@@ -28,11 +29,14 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import com.codepotro.borno.common.model.KeyDef
 import com.codepotro.borno.common.model.KeyType
 import com.codepotro.borno.common.model.KeyboardLayoutDef
@@ -68,8 +72,10 @@ import com.codepotro.borno.feature.ime.ui.suggestion.SuggestionCandidate
 import com.codepotro.borno.feature.ime.ui.textedit.TextAction
 import com.codepotro.borno.feature.ime.ui.toolbar.ToolbarAction
 import com.codepotro.borno.feature.ime.voice.VoiceInputManager
+import com.codepotro.borno.theme.GradientType
 import com.codepotro.borno.theme.KeyboardColorScheme
 import com.codepotro.borno.theme.KiebordTheme
+import com.codepotro.borno.theme.ThemeColorUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -404,6 +410,7 @@ class KiebordService : InputMethodService() {
                 (transliterationManager as? GenericTransliterationManager)?.isAutoCorrectEnabled = prefs.phoneticAutoCorrect
                 val isDark = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
                 colorScheme = com.codepotro.borno.theme.ThemeRepository.getInstance(this@KiebordService).getColorScheme(prefs.theme, this@KiebordService, isDark = isDark)
+                syncNavigationBarAppearance()
                 val availableMeta = layoutRepo.getAvailableLayouts().map { it.id }.toSet()
                 val enabledIds = prefs.enabledLayoutIds.toList().filter { id ->
                     id in availableMeta || id == KiebordPreferences.LAYOUT_AR_ARABIC
@@ -443,11 +450,58 @@ class KiebordService : InputMethodService() {
             val isDark = (newConfig.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
             colorScheme = com.codepotro.borno.theme.ThemeRepository.getInstance(this).getColorScheme(preferencesState.theme, this, isDark = isDark)
         }
+        syncNavigationBarAppearance()
     }
 
     override fun onEvaluateFullscreenMode(): Boolean = false
 
     private var floatingTouchableRegionInWindow by mutableStateOf<android.graphics.Region?>(null)
+
+    private fun resolveNavigationBarColor(): Color {
+        val fallback = colorScheme.containerBackground.copy(alpha = 1f)
+        val gradient = colorScheme.themeSpec?.background?.gradient
+        if (gradient != null && gradient.colors.isNotEmpty()) {
+            val hex = if (gradient.type == GradientType.LINEAR && kotlin.math.sin(Math.toRadians(gradient.angle.toDouble())) < 0.0) {
+                gradient.colors.first()
+            } else {
+                gradient.colors.last()
+            }
+            return ThemeColorUtils.parseHexColor(hex, fallback).copy(alpha = 1f)
+        }
+        return fallback
+    }
+
+    @Suppress("DEPRECATION")
+    private fun syncNavigationBarAppearance(win: Window? = window?.window) {
+        val targetWindow = win ?: return
+        try {
+            targetWindow.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION)
+            targetWindow.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
+
+            if (preferencesState.isFloatingMode) {
+                targetWindow.navigationBarColor = android.graphics.Color.TRANSPARENT
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                    targetWindow.navigationBarDividerColor = android.graphics.Color.TRANSPARENT
+                }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    targetWindow.isNavigationBarContrastEnforced = false
+                }
+                val isSystemDark = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
+                WindowInsetsControllerCompat(targetWindow, targetWindow.decorView).isAppearanceLightNavigationBars = !isSystemDark
+            } else {
+                val navBgColor = resolveNavigationBarColor()
+                targetWindow.navigationBarColor = navBgColor.toArgb()
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                    targetWindow.navigationBarDividerColor = android.graphics.Color.TRANSPARENT
+                }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    targetWindow.isNavigationBarContrastEnforced = false
+                }
+                val isDarkNavBg = ThemeColorUtils.isColorDark(navBgColor)
+                WindowInsetsControllerCompat(targetWindow, targetWindow.decorView).isAppearanceLightNavigationBars = !isDarkNavBg
+            }
+        } catch (_: Exception) {}
+    }
 
     private fun updateWindowLayoutForFloating(isFloating: Boolean) {
         try {
@@ -474,6 +528,7 @@ class KiebordService : InputMethodService() {
         super.onConfigureWindow(win, false, isCandidatesOnly)
         lifecycleOwner.attachToView(win.decorView)
         updateWindowLayoutForFloating(preferencesState.isFloatingMode)
+        syncNavigationBarAppearance(win)
     }
 
     override fun onComputeInsets(outInsets: Insets) {
@@ -522,7 +577,11 @@ class KiebordService : InputMethodService() {
         composeView.setContent {
             androidx.compose.runtime.LaunchedEffect(preferencesState.isFloatingMode) {
                 updateWindowLayoutForFloating(preferencesState.isFloatingMode)
+                syncNavigationBarAppearance()
                 window?.window?.decorView?.requestLayout()
+            }
+            androidx.compose.runtime.LaunchedEffect(colorScheme) {
+                syncNavigationBarAppearance()
             }
 
             val density = LocalDensity.current
@@ -758,6 +817,8 @@ class KiebordService : InputMethodService() {
     override fun onWindowShown() {
         super.onWindowShown()
         lifecycleOwner.onStart()
+        syncNavigationBarAppearance()
+        window?.window?.decorView?.let { ViewCompat.requestApplyInsets(it) }
         val info = currentEditorInfoState ?: currentInputEditorInfo
         if (!InputModeResolver.isPasswordField(info)) {
             clipboardManager.syncFromSystemClipboard(this)
@@ -794,6 +855,7 @@ class KiebordService : InputMethodService() {
             val isDark = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
             colorScheme = com.codepotro.borno.theme.ThemeRepository.getInstance(this).getColorScheme(preferencesState.theme, this, isDark = isDark)
         }
+        syncNavigationBarAppearance()
         currentEditorInfoState = info
         lastDeletedBatchState = null
         val isPass = InputModeResolver.isPasswordField(info)
