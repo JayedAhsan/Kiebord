@@ -13,8 +13,8 @@ android {
         applicationId = "com.codepotro.borno.kiebord"
         minSdk = 24
         targetSdk = 36
-        versionCode = 27
-        versionName = "0.3.4"
+        versionCode = 28
+        versionName = "0.3.5"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
