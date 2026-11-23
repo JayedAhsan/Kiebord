@@ -26,5 +26,17 @@
     "sizeBytes": 20715,
     "hasDictionary": false,
     "credit": "Touchscreen-optimized m17n input method rules for Bangla typing (https://github.com/KhiproTeam/khipro-mim-touchscreen and https://github.com/KhiproTeam/khipro-dark-m17n)"
+  },
+  {
+    "id": "unijoy",
+    "name": "Unijoy Layout",
+    "language": "bn",
+    "version": 1,
+    "author": "Md. Rifat Hasan Jihan",
+    "description": "Unijoy fixed Bangla keyboard layout",
+    "downloadUrl": "https://raw.githubusercontent.com/JayedAhsan/Kiebord/main/language-packs/releases/unijoy.bornolang",
+    "sha256": "83fbbae131b1fc9fe97e32e4dc913efc2968234310fca46a8c4c4cd0f381d383",
+    "sizeBytes": 2318,
+    "hasDictionary": false
   }
 ]
