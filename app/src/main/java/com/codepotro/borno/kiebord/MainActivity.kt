@@ -90,6 +90,9 @@ class MainActivity : ComponentActivity() {
     private var isImeEnabledState by mutableStateOf(false)
     private var isImeSelectedState by mutableStateOf(false)
     private var requestedNavigationTarget by mutableStateOf<String?>(null)
+    private var pendingDictPrefillPhrase by mutableStateOf<String?>(null)
+    private var pendingDictPrefillLanguage by mutableStateOf<String?>(null)
+    private var pendingDictFocusShortcut by mutableStateOf(false)
     private var pendingThemeImportUri by mutableStateOf<android.net.Uri?>(null)
     private var pendingLangPackImportUri by mutableStateOf<android.net.Uri?>(null)
     private var pendingClipboardImportUri by mutableStateOf<android.net.Uri?>(null)
@@ -185,6 +188,14 @@ class MainActivity : ComponentActivity() {
                             onClearPendingClipboardImportUri = { pendingClipboardImportUri = null },
                             pendingDictionaryImportUri = pendingDictionaryImportUri,
                             onClearPendingDictionaryImportUri = { pendingDictionaryImportUri = null },
+                            pendingDictPrefillPhrase = pendingDictPrefillPhrase,
+                            pendingDictPrefillLanguage = pendingDictPrefillLanguage,
+                            pendingDictFocusShortcut = pendingDictFocusShortcut,
+                            onClearPendingDictPrefill = {
+                                pendingDictPrefillPhrase = null
+                                pendingDictPrefillLanguage = null
+                                pendingDictFocusShortcut = false
+                            },
                             onOpenSettings = {
                                 startActivity(Intent(Settings.ACTION_INPUT_METHOD_SETTINGS))
                             },
@@ -272,6 +283,12 @@ class MainActivity : ComponentActivity() {
         }
         val target = intent.getStringExtra("navigate_to")
             ?: if (intent.action == "com.codepotro.borno.kiebord.action.THEMES") "themes" else null
+        val prefillPhrase = intent.getStringExtra("prefill_phrase")
+        if (!prefillPhrase.isNullOrBlank()) {
+            pendingDictPrefillPhrase = prefillPhrase
+            pendingDictPrefillLanguage = intent.getStringExtra("prefill_language")
+            pendingDictFocusShortcut = intent.getBooleanExtra("focus_shortcut", false)
+        }
         if (target != null) {
             requestedNavigationTarget = target
         }
@@ -310,6 +327,10 @@ fun KiebordSettingsApp(
     onClearPendingClipboardImportUri: () -> Unit = {},
     pendingDictionaryImportUri: android.net.Uri? = null,
     onClearPendingDictionaryImportUri: () -> Unit = {},
+    pendingDictPrefillPhrase: String? = null,
+    pendingDictPrefillLanguage: String? = null,
+    pendingDictFocusShortcut: Boolean = false,
+    onClearPendingDictPrefill: () -> Unit = {},
     onOpenSettings: () -> Unit,
     onSwitchIme: () -> Unit,
     onSaveOnboardingLayouts: (enabledLayouts: Set<String>, primaryLayout: String) -> Unit,
@@ -331,6 +352,7 @@ fun KiebordSettingsApp(
             target == "extensions" || target == "language_extensions" || target == "languages" || pendingLangPackImportUri != null -> SettingsScreen.LanguageExtensions
             target == "backup" || target == "backup_restore" || target == "restore" || pendingClipboardImportUri != null || pendingDictionaryImportUri != null -> SettingsScreen.BackupRestore
             target == "clipboard" -> SettingsScreen.Clipboard
+            target == "dictionary" || target == "personal_dictionary" -> SettingsScreen.PersonalDictionary
             target == "preferences" -> SettingsScreen.Preferences
             !isSetupFinished -> SettingsScreen.Onboarding
             else -> SettingsScreen.Main
@@ -726,6 +748,10 @@ fun KiebordSettingsApp(
                     is SettingsScreen.PersonalDictionary -> {
                         PersonalDictionaryScreen(
                             repository = PersonalDictionaryRepository.getInstance(context),
+                            initialPhrase = pendingDictPrefillPhrase,
+                            initialLanguage = pendingDictPrefillLanguage,
+                            focusShortcut = pendingDictFocusShortcut,
+                            onPrefillConsumed = onClearPendingDictPrefill,
                             onBack = navigateBack
                         )
                     }

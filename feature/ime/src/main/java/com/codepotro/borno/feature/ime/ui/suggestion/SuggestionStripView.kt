@@ -239,7 +239,9 @@ fun SuggestionStripView(
                         key(candidate.text) {
                             val isPrimary = candidate.isPrimary
                             val isRaw = candidate.rawInput != null && candidate.text == candidate.rawInput
-                            val isLearnedWithAction = candidate.isLearned && onCandidateLongClick != null
+                            val hasLongClickAction = onCandidateLongClick != null &&
+                                    candidate.text.isNotBlank() &&
+                                    !com.codepotro.borno.feature.ime.ui.emoji.EmojiSearchCatalog.isEmoji(candidate.text)
 
                             if (index > 0) {
                                 Box(
@@ -250,7 +252,7 @@ fun SuggestionStripView(
                                 )
                             }
 
-                            val chipClickModifier = if (isLearnedWithAction) {
+                            val chipClickModifier = if (hasLongClickAction) {
                                 Modifier.combinedClickable(
                                     onClick = { onCandidateClick(candidate) },
                                     onLongClick = { onCandidateLongClick(candidate) }
@@ -299,7 +301,9 @@ fun SuggestionStripView(
                         key(candidate.text) {
                             val isPrimary = candidate.isPrimary
                             val isRaw = candidate.rawInput != null && candidate.text == candidate.rawInput
-                            val isLearnedWithAction = candidate.isLearned && onCandidateLongClick != null
+                            val hasLongClickAction = onCandidateLongClick != null &&
+                                    candidate.text.isNotBlank() &&
+                                    !com.codepotro.borno.feature.ime.ui.emoji.EmojiSearchCatalog.isEmoji(candidate.text)
 
                             // Clean vertical divider between candidate slots
                             if (index > 0) {
@@ -311,7 +315,7 @@ fun SuggestionStripView(
                                 )
                             }
 
-                            val chipClickModifier = if (isLearnedWithAction) {
+                            val chipClickModifier = if (hasLongClickAction) {
                                 Modifier.combinedClickable(
                                     onClick = { onCandidateClick(candidate) },
                                     onLongClick = { onCandidateLongClick(candidate) }

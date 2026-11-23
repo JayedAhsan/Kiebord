@@ -172,6 +172,8 @@ fun KeyboardRootView(
     suggestionBarMode: String = KiebordPreferences.SUGGESTION_BAR_MODE_SCROLLABLE,
     onCandidateSelect: (SuggestionCandidate) -> Unit = {},
     onUnlearnWord: (String) -> Unit = {},
+    hasPersonalMapping: (String) -> Boolean = { false },
+    onSetMapping: (String) -> Unit = {},
     clipboardManager: SandboxedClipboardManager? = null,
     onPasteClip: (String) -> Unit = {},
     onOpenClipboardSettings: () -> Unit = {},
@@ -292,6 +294,8 @@ fun KeyboardRootView(
 
     var isLanguagePickerOpen by remember { mutableStateOf(false) }
     var unlearnCandidateTarget by remember { mutableStateOf<SuggestionCandidate?>(null) }
+    var setMappingCandidateTarget by remember { mutableStateOf<SuggestionCandidate?>(null) }
+    var isEditingExistingMapping by remember { mutableStateOf(false) }
     var isSpacebarSwiping by remember { mutableStateOf(false) }
     var spacebarSwipeDeltaX by remember { mutableFloatStateOf(0f) }
 
@@ -1410,7 +1414,15 @@ fun KeyboardRootView(
                                 onCandidateSelect(candidate)
                             },
                             onCandidateLongClick = { candidate ->
-                                unlearnCandidateTarget = candidate
+                                if (candidate.text.isNotBlank() && hasPersonalMapping(candidate.text)) {
+                                    isEditingExistingMapping = true
+                                    setMappingCandidateTarget = candidate
+                                } else if (candidate.isLearned) {
+                                    unlearnCandidateTarget = candidate
+                                } else if (candidate.text.isNotBlank()) {
+                                    isEditingExistingMapping = false
+                                    setMappingCandidateTarget = candidate
+                                }
                             },
                             mode = suggestionBarMode,
                             isExpanded = isSuggestionsExpanded,
@@ -2473,7 +2485,15 @@ fun KeyboardRootView(
                         onCandidateSelect(candidate)
                     },
                     onCandidateLongClick = { candidate ->
-                        unlearnCandidateTarget = candidate
+                        if (candidate.text.isNotBlank() && hasPersonalMapping(candidate.text)) {
+                            isEditingExistingMapping = true
+                            setMappingCandidateTarget = candidate
+                        } else if (candidate.isLearned) {
+                            unlearnCandidateTarget = candidate
+                        } else if (candidate.text.isNotBlank()) {
+                            isEditingExistingMapping = false
+                            setMappingCandidateTarget = candidate
+                        }
                     },
                     onDelete = {
                         onKeyTap(KeyDef(type = KeyType.DELETE))
@@ -2957,6 +2977,24 @@ fun KeyboardRootView(
             )
         }
 
+        // 7b. Set / Edit Personal Dictionary Mapping Dialog
+        if (setMappingCandidateTarget != null) {
+            val candidateToMap = setMappingCandidateTarget!!
+            SetMappingConfirmationDialog(
+                word = candidateToMap.text,
+                isEdit = isEditingExistingMapping,
+                onConfirm = {
+                    onSetMapping(candidateToMap.text)
+                    setMappingCandidateTarget = null
+                    performHaptic(HapticFeedbackType.LongPress)
+                },
+                onDismiss = { setMappingCandidateTarget = null },
+                modifier = Modifier
+                    .padding(top = popupHeadroomDp)
+                    .matchParentSize()
+            )
+        }
+
         // 8. One-Handed Mode Side Control Bar (Padding Adjuster '=', Expand, and Direction '<' / '>')
         if (!isFloating && oneHandedSide != "OFF") {
             OneHandedSideBar(
@@ -3413,6 +3451,114 @@ fun UnlearnWordConfirmationDialog(
                     Text(
                         text = "Remove",
                         color = removeBtnFg,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        fontFamily = KiebordTheme.fontFamily
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun SetMappingConfirmationDialog(
+    word: String,
+    isEdit: Boolean,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val colorScheme = KiebordTheme.colorScheme
+    val titleText = if (isEdit) "Edit Mapping" else "Set Mapping"
+    val bodyText = if (isEdit) {
+        "Edit the shortcut mapping for \"$word\" in Personal Dictionary?"
+    } else {
+        "Add a shortcut mapping for \"$word\" in Personal Dictionary?"
+    }
+
+    Box(
+        modifier = modifier
+            .background(androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.55f))
+            .clickable(
+                interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                indication = null
+            ) { onDismiss() },
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            modifier = Modifier
+                .width(280.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .background(colorScheme.containerBackground)
+                .clickable(
+                    interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                    indication = null
+                ) {}
+                .padding(20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = titleText,
+                color = colorScheme.keyForeground,
+                fontSize = 17.sp,
+                fontWeight = FontWeight.SemiBold,
+                fontFamily = KiebordTheme.fontFamily,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            Text(
+                text = bodyText,
+                color = colorScheme.keyForeground.copy(alpha = 0.8f),
+                fontSize = 14.sp,
+                fontFamily = KiebordTheme.fontFamily,
+                textAlign = TextAlign.Center,
+                lineHeight = 19.sp
+            )
+
+            Spacer(modifier = Modifier.height(18.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable { onDismiss() }
+                        .padding(horizontal = 14.dp, vertical = 8.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Cancel",
+                        color = colorScheme.keyForeground.copy(alpha = 0.7f),
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        fontFamily = KiebordTheme.fontFamily
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                val confirmBtnFg = ThemeColorUtils.ensureContrast(
+                    foreground = colorScheme.actionKeyForeground,
+                    background = colorScheme.accentColor,
+                    minContrast = 4.0f
+                )
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(colorScheme.accentColor)
+                        .clickable { onConfirm() }
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = titleText,
+                        color = confirmBtnFg,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.SemiBold,
                         fontFamily = KiebordTheme.fontFamily

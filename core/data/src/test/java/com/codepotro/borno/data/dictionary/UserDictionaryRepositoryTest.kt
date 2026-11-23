@@ -1,4 +1,4 @@
-﻿package com.codepotro.borno.data.dictionary
+package com.codepotro.borno.data.dictionary
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -202,6 +202,28 @@ class UserDictionaryRepositoryTest {
 
         val allLearned = repo.getAllLearnedWords(10)
         assertTrue(allLearned.contains("আমির"))
+    }
+
+    @Test
+    fun testLearnedWordsFlowUpdatesOnRecordUnlearnAndClear() {
+        val repo = UserDictionaryRepository(tempFolder.root)
+        assertTrue(repo.learnedWordsFlow.value.isEmpty())
+
+        repo.recordWord("বাংলা")
+        assertTrue(repo.learnedWordsFlow.value.isEmpty())
+
+        repo.recordWord("বাংলা")
+        assertEquals(listOf("বাংলা"), repo.learnedWordsFlow.value)
+
+        repo.recordWord("hello")
+        repo.recordWord("hello")
+        assertTrue(repo.learnedWordsFlow.value.containsAll(listOf("বাংলা", "hello")))
+
+        repo.unlearnWord("বাংলা")
+        assertEquals(listOf("hello"), repo.learnedWordsFlow.value)
+
+        repo.clearAll()
+        assertTrue(repo.learnedWordsFlow.value.isEmpty())
     }
 }
 

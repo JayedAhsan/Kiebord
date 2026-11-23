@@ -1,4 +1,4 @@
-﻿package com.codepotro.borno.data.dictionary
+package com.codepotro.borno.data.dictionary
 
 import android.content.Context
 import android.os.Build
@@ -87,6 +87,28 @@ class PersonalDictionaryRepository internal constructor(private val baseDir: Fil
         if (list.isEmpty()) return emptyList()
 
         return list.filter { it.matchesLanguage(layoutLang) }
+    }
+
+    /**
+     * Finds an existing personal dictionary entry matching [word] (case-insensitive) for [layoutLang].
+     * Prefers an exact language match over a universal ("all") entry when both exist.
+     */
+    fun findByWord(word: String, layoutLang: String): PersonalDictionaryEntry? {
+        val clean = word.trim()
+        if (clean.isEmpty()) return null
+        val targetLang = layoutLang.trim().lowercase()
+        var universalMatch: PersonalDictionaryEntry? = null
+        for (entry in entriesMap.values) {
+            if (entry.word.equals(clean, ignoreCase = true) && entry.matchesLanguage(targetLang)) {
+                if (entry.language.equals(targetLang, ignoreCase = true)) {
+                    return entry
+                }
+                if (universalMatch == null) {
+                    universalMatch = entry
+                }
+            }
+        }
+        return universalMatch
     }
 
     /**

@@ -1,4 +1,4 @@
-﻿package com.codepotro.borno.feature.ime.ui.suggestion
+package com.codepotro.borno.feature.ime.ui.suggestion
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -127,9 +127,11 @@ fun ExpandedSuggestionsPanelView(
                         key(candidate.text) {
                             val isPrimary = candidate.isPrimary
                             val isRaw = candidate.rawInput != null && candidate.text == candidate.rawInput
-                            val isLearnedWithAction = candidate.isLearned && onCandidateLongClick != null
+                            val hasLongClickAction = onCandidateLongClick != null &&
+                                    candidate.text.isNotBlank() &&
+                                    !com.codepotro.borno.feature.ime.ui.emoji.EmojiSearchCatalog.isEmoji(candidate.text)
 
-                            val chipClickModifier = if (isLearnedWithAction) {
+                            val chipClickModifier = if (hasLongClickAction) {
                                 Modifier.combinedClickable(
                                     onClick = { onCandidateClick(candidate) },
                                     onLongClick = { onCandidateLongClick(candidate) }

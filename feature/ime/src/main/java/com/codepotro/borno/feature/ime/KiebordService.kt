@@ -599,6 +599,10 @@ class KiebordService : InputMethodService() {
                     suggestions = activeSuggestions,
                     suggestionBarMode = preferencesState.suggestionBarMode,
                     onCandidateSelect = ::handleCandidateSelect,
+                    hasPersonalMapping = { word ->
+                        personalDictionaryRepo.findByWord(word, resolvePersonalDictLanguage()) != null
+                    },
+                    onSetMapping = ::openPersonalDictionaryForMapping,
                     onUnlearnWord = { word ->
                         userDictionaryRepo.unlearnWord(word)
                         val removedChoice = bornoSuggestionChoiceRepo.unlearnWord(word)
@@ -1236,6 +1240,27 @@ class KiebordService : InputMethodService() {
             val intent = Intent(this, getMainActivityClass()).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
                 putExtra("navigate_to", "clipboard")
+            }
+            startActivity(intent)
+        } catch (_: Exception) {}
+    }
+
+    private fun resolvePersonalDictLanguage(): String = when {
+        isBanglaLayout(activeLayout) -> com.codepotro.borno.data.dictionary.PersonalDictionaryEntry.LANG_BN
+        isEnglishLayout(activeLayout) -> com.codepotro.borno.data.dictionary.PersonalDictionaryEntry.LANG_EN
+        else -> com.codepotro.borno.data.dictionary.PersonalDictionaryEntry.LANG_ALL
+    }
+
+    fun openPersonalDictionaryForMapping(word: String) {
+        val cleanWord = word.trim()
+        if (cleanWord.isEmpty()) return
+        try {
+            val intent = Intent(this, getMainActivityClass()).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                putExtra("navigate_to", "personal_dictionary")
+                putExtra("prefill_phrase", cleanWord)
+                putExtra("prefill_language", resolvePersonalDictLanguage())
+                putExtra("focus_shortcut", true)
             }
             startActivity(intent)
         } catch (_: Exception) {}

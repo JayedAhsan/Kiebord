@@ -1,4 +1,4 @@
-﻿package com.codepotro.borno.data.dictionary
+package com.codepotro.borno.data.dictionary
 
 import android.content.Context
 import android.os.Build
@@ -7,6 +7,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 import java.io.File
@@ -42,6 +45,13 @@ class UserDictionaryRepository internal constructor(private val baseDir: File) {
 
     // 3. Gesture committed words: word -> count
     private val gestureWords = ConcurrentHashMap<String, Int>()
+
+    private val _learnedWordsFlow = MutableStateFlow<List<String>>(emptyList())
+    val learnedWordsFlow: StateFlow<List<String>> = _learnedWordsFlow.asStateFlow()
+
+    private fun refreshLearnedWordsFlow() {
+        _learnedWordsFlow.value = getAllLearnedWords(limit = Int.MAX_VALUE)
+    }
 
     private val storageFile: File by lazy {
         File(baseDir, "user_dict_data.json")
@@ -109,6 +119,9 @@ class UserDictionaryRepository internal constructor(private val baseDir: File) {
         // the minimum learning threshold (>= 2 occurrences). Single-occurrence words are kept
         // in memory as transient candidates to avoid disk writes and CPU wakeups.
         if (newWordCount >= MIN_LEARN_OCCURRENCES || newBigramCount >= MIN_LEARN_OCCURRENCES || newGestureCount >= MIN_LEARN_OCCURRENCES) {
+            if (newWordCount >= MIN_LEARN_OCCURRENCES || newGestureCount >= MIN_LEARN_OCCURRENCES) {
+                refreshLearnedWordsFlow()
+            }
             scheduleDebouncedSave()
         }
     }
@@ -241,6 +254,9 @@ class UserDictionaryRepository internal constructor(private val baseDir: File) {
             }
         }
         if (hadWord || hadGesture || hadBigram || hadNextBigram) {
+            if (hadWord || hadGesture) {
+                refreshLearnedWordsFlow()
+            }
             scheduleDebouncedSave()
         }
     }
@@ -275,6 +291,7 @@ class UserDictionaryRepository internal constructor(private val baseDir: File) {
         wordFrequencies.clear()
         bigramFrequencies.clear()
         gestureWords.clear()
+        _learnedWordsFlow.value = emptyList()
 
         scope.launch {
             try {
@@ -400,6 +417,7 @@ class UserDictionaryRepository internal constructor(private val baseDir: File) {
                         }
                     }
                 }
+                refreshLearnedWordsFlow()
             } catch (_: Throwable) {}
         }
     }
