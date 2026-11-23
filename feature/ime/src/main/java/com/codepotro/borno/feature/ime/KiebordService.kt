@@ -890,7 +890,7 @@ class KiebordService : InputMethodService() {
                 InputModeResolver.isDirectCommit(info) ||
                 PredefinedLayouts.isNumberLayout(activeLayout.id)
 
-        if (isDeleteLongPressActive) {
+        if (isDeleteLongPressActive || isSwipeDeleting) {
             if (candidatesStart >= 0 && candidatesEnd > candidatesStart) {
                 ic?.finishComposingText()
             }
@@ -903,7 +903,15 @@ class KiebordService : InputMethodService() {
             return
         }
 
+        val isStaleSelectionCollapse = oldSelStart != oldSelEnd &&
+                newSelStart == newSelEnd &&
+                candidatesStart < 0 &&
+                candidatesEnd < 0
+
         if (translitMgr.isComposing) {
+            if (isStaleSelectionCollapse) {
+                return
+            }
             // For active phonetic/m17n transliteration, moving away from candidatesEnd commits it.
             val cursorMovedAway = candidatesStart < 0 ||
                     candidatesEnd < 0 ||
@@ -941,6 +949,9 @@ class KiebordService : InputMethodService() {
         }
 
         if (composingBuffer.isNotEmpty()) {
+            if (isStaleSelectionCollapse) {
+                return
+            }
             val cursorInsideComposing = newSelStart == newSelEnd &&
                     candidatesStart >= 0 &&
                     candidatesEnd > candidatesStart &&
@@ -1268,7 +1279,7 @@ class KiebordService : InputMethodService() {
         selStart: Int? = null,
         selEnd: Int? = null
     ): Boolean {
-        if (isDeleteLongPressActive || isSpacebarTrackpadActive || SystemClock.uptimeMillis() < suppressRecomposeUntilMs) return false
+        if (isDeleteLongPressActive || isSwipeDeleting || isSpacebarTrackpadActive || SystemClock.uptimeMillis() < suppressRecomposeUntilMs) return false
         if (ic == null || !isComposingAllowedForCurrentEditor()) return false
         if (selStart != null && selEnd != null && selStart != selEnd) return false
         if (selStart == null || selEnd == null) {
@@ -1276,27 +1287,54 @@ class KiebordService : InputMethodService() {
         }
         if (isTransliterationLayout() && getTransliterationManager().isComposing) return false
 
-        val textBefore = try { ic.getTextBeforeCursor(64, 0)?.toString() ?: "" } catch (_: Exception) { "" }
-        val textAfter = try { ic.getTextAfterCursor(64, 0)?.toString() ?: "" } catch (_: Exception) { "" }
-        val around = ComposingWordUtils.extractWordAroundCursor(textBefore, textAfter, ::isRecomposableWordChar)
-            ?: return false
+        // Fetch text around cursor AND absolute cursor offset atomically so setComposingRegion
+        // can never be misaligned with a stale selStart/lastKnownSelStart (which would underline
+        // spaces/wrong characters and corrupt the sentence on edit/delete).
+        var textBefore: String? = null
+        var textAfter: String? = null
+        var cursorPos = -1
 
-        val cursorPos = when {
-            selStart != null && selStart >= 0 -> selStart
-            lastKnownSelStart >= 0 && lastKnownSelStart == lastKnownSelEnd -> lastKnownSelStart
-            else -> {
-                val ext = try { ic.getExtractedText(ExtractedTextRequest(), 0) } catch (_: Exception) { null }
-                if (ext != null && ext.selectionStart == ext.selectionEnd && ext.selectionStart >= 0) {
-                    ext.startOffset + ext.selectionStart
-                } else {
-                    -1
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val surrounding = try { ic.getSurroundingText(64, 64, 0) } catch (_: Exception) { null }
+            if (surrounding != null) {
+                val sStart = surrounding.selectionStart
+                val sEnd = surrounding.selectionEnd
+                val sText = surrounding.text
+                if (sStart != sEnd) return false
+                if (sStart >= 0 && sStart <= sText.length && surrounding.offset >= 0) {
+                    textBefore = sText.subSequence(0, sStart).toString()
+                    textAfter = sText.subSequence(sStart, sText.length).toString()
+                    cursorPos = surrounding.offset + sStart
                 }
             }
         }
+
+        if (textBefore == null || textAfter == null || cursorPos < 0) {
+            val ext = try { ic.getExtractedText(ExtractedTextRequest(), 0) } catch (_: Exception) { null }
+            val extText = ext?.text
+            if (ext != null && extText != null) {
+                if (ext.selectionStart != ext.selectionEnd) return false
+                val relCursor = ext.selectionStart
+                if (relCursor >= 0 && relCursor <= extText.length && ext.startOffset >= 0) {
+                    textBefore = extText.subSequence((relCursor - 64).coerceAtLeast(0), relCursor).toString()
+                    textAfter = extText.subSequence(relCursor, (relCursor + 64).coerceAtMost(extText.length)).toString()
+                    cursorPos = ext.startOffset + relCursor
+                }
+            }
+        }
+
+        // Never guess a composing region when the editor cannot report an atomic cursor position.
+        if (textBefore == null || textAfter == null || cursorPos < 0) return false
+
+        val around = ComposingWordUtils.extractWordAroundCursor(textBefore, textAfter, ::isRecomposableWordChar)
+            ?: return false
+        if (around.charsBeforeCursor <= 0) return false
         if (cursorPos < around.charsBeforeCursor) return false
 
         val wordStart = cursorPos - around.charsBeforeCursor
         val wordEnd = cursorPos + around.charsAfterCursor
+        lastKnownSelStart = cursorPos
+        lastKnownSelEnd = cursorPos
 
         if (composingBuffer.toString() == around.word && composingStartOffset == wordStart) {
             composingCursorOffset = around.charsBeforeCursor
@@ -1487,7 +1525,8 @@ class KiebordService : InputMethodService() {
 
                 val editorInfo = currentEditorInfoState ?: currentInputEditorInfo
                 val isPass = InputModeResolver.isPasswordField(editorInfo)
-                val isDirect = isPass || InputModeResolver.isDirectCommit(editorInfo) || PredefinedLayouts.isNumberLayout(activeLayout.id)
+                val isDirect = isPass || PredefinedLayouts.isNumberLayout(activeLayout.id) ||
+                        (InputModeResolver.isDirectCommit(editorInfo) && !isTransliterationLayout())
 
                 if (isDirect) {
                     composingBuffer.clear()
@@ -1517,17 +1556,22 @@ class KiebordService : InputMethodService() {
                     isTransliterationLayout() -> {
                         if (isTransliterableChar(text) || isBengaliOrModifier(text) || isExtraCompositionChar(text)) {
                             val translitMgr = getTransliterationManager()
-                            if (!translitMgr.isComposing && composingBuffer.isNotEmpty()) {
-                                ic.finishComposingText()
-                                clearComposingState()
-                            }
-                            if (!translitMgr.isComposing && shouldRemoveSpaceBeforePunctuation(text)) {
-                                val textBefore = ic.getTextBeforeCursor(1, 0)
-                                if (textBefore != null && textBefore.endsWith(" ")) {
-                                    ic.deleteSurroundingText(1, 0)
+                            ic.beginBatchEdit()
+                            try {
+                                if (!translitMgr.isComposing && composingBuffer.isNotEmpty()) {
+                                    ic.finishComposingText()
+                                    clearComposingState()
                                 }
+                                if (!translitMgr.isComposing && shouldRemoveSpaceBeforePunctuation(text)) {
+                                    val textBefore = ic.getTextBeforeCursor(1, 0)
+                                    if (textBefore != null && textBefore.endsWith(" ")) {
+                                        ic.deleteSurroundingText(1, 0)
+                                    }
+                                }
+                                translitMgr.handleCharacter(text)
+                            } finally {
+                                ic.endBatchEdit()
                             }
-                            translitMgr.handleCharacter(text)
                         } else {
                             val translitMgr = getTransliterationManager()
                             val word = translitMgr.currentTransliteration.trim().trimEnd { isPunctuationChar(it) }
@@ -1730,7 +1774,21 @@ class KiebordService : InputMethodService() {
 
                 val selectedText = ic.getSelectedText(0)
                 if (!selectedText.isNullOrEmpty()) {
+                    val translitMgr = getTransliterationManager()
+                    if (translitMgr.isComposing) {
+                        translitMgr.reset()
+                    }
+                    if (composingBuffer.isNotEmpty()) {
+                        clearComposingState()
+                    }
+                    suppressRecomposeUntilMs = SystemClock.uptimeMillis() + 250L
+                    ic.finishComposingText()
                     ic.commitText("", 1)
+                    activeSuggestions = emptyList()
+                    return
+                }
+
+                if (!isPass && isTransliterationLayout() && getTransliterationManager().handleDelete()) {
                     if (!isDirect) updateSuggestions() else activeSuggestions = emptyList()
                     return
                 }
@@ -1738,13 +1796,17 @@ class KiebordService : InputMethodService() {
                 if (isDirect) {
                     composingBuffer.clear()
                     try {
-                        ic.beginBatchEdit()
-                        val textBefore = ic.getTextBeforeCursor(16, 0)
-                        val deleteLen = if (!textBefore.isNullOrEmpty()) EmojiSearchCatalog.getDeleteLengthBeforeCursor(textBefore) else 1
-                        val deleted = ic.deleteSurroundingText(deleteLen, 0)
-                        ic.endBatchEdit()
-                        if (!deleted || editorInfo?.inputType == InputType.TYPE_NULL) {
+                        if (editorInfo?.inputType == InputType.TYPE_NULL) {
                             sendNavKeyEvent(ic, KeyEvent.KEYCODE_DEL, isSelecting = false)
+                        } else {
+                            ic.beginBatchEdit()
+                            val textBefore = ic.getTextBeforeCursor(16, 0)
+                            val deleteLen = if (!textBefore.isNullOrEmpty()) EmojiSearchCatalog.getDeleteLengthBeforeCursor(textBefore) else 1
+                            val deleted = ic.deleteSurroundingText(deleteLen, 0)
+                            ic.endBatchEdit()
+                            if (!deleted) {
+                                sendNavKeyEvent(ic, KeyEvent.KEYCODE_DEL, isSelecting = false)
+                            }
                         }
                     } catch (_: Exception) {
                         try {
@@ -1871,7 +1933,8 @@ class KiebordService : InputMethodService() {
             KeyType.SPACE -> {
                 val editorInfo = currentEditorInfoState ?: currentInputEditorInfo
                 val isPass = InputModeResolver.isPasswordField(editorInfo)
-                val isDirect = isPass || InputModeResolver.isDirectCommit(editorInfo) || PredefinedLayouts.isNumberLayout(activeLayout.id)
+                val isDirect = isPass || PredefinedLayouts.isNumberLayout(activeLayout.id) ||
+                        (InputModeResolver.isDirectCommit(editorInfo) && !(isTransliterationLayout() && getTransliterationManager().isComposing))
 
                 if (isDirect) {
                     composingBuffer.clear()
@@ -1915,8 +1978,13 @@ class KiebordService : InputMethodService() {
                 } else if (composingBuffer.isNotEmpty()) {
                     if (composingCursorOffset < composingBuffer.length) {
                         // Mid-word space splits the word at the cursor without replacing the whole word.
-                        finishComposing()
-                        ic.commitText(" ", 1)
+                        ic.beginBatchEdit()
+                        try {
+                            finishComposing()
+                            ic.commitText(" ", 1)
+                        } finally {
+                            ic.endBatchEdit()
+                        }
                         lastSpaceTapTime = SystemClock.uptimeMillis()
                     } else {
                         val raw = composingBuffer.toString()
@@ -2077,7 +2145,8 @@ class KiebordService : InputMethodService() {
 
         val editorInfo = currentEditorInfoState ?: currentInputEditorInfo
         val isPass = InputModeResolver.isPasswordField(editorInfo)
-        val isDirect = isPass || InputModeResolver.isDirectCommit(editorInfo) || PredefinedLayouts.isNumberLayout(activeLayout.id)
+        val isDirect = isPass || PredefinedLayouts.isNumberLayout(activeLayout.id) ||
+                (InputModeResolver.isDirectCommit(editorInfo) && !isTransliterationLayout())
         if (isDirect) {
             finishComposing()
             try {
@@ -2097,13 +2166,22 @@ class KiebordService : InputMethodService() {
 
         if (isTransliterationLayout() && (isTransliterableChar(charToInsert) || isBengaliOrModifier(charToInsert) || isExtraCompositionChar(charToInsert))) {
             val translitMgr = getTransliterationManager()
-            if (!translitMgr.isComposing && shouldRemoveSpaceBeforePunctuation(charToInsert)) {
-                val textBefore = ic.getTextBeforeCursor(1, 0)
-                if (textBefore != null && textBefore.endsWith(" ")) {
-                    ic.deleteSurroundingText(1, 0)
+            ic.beginBatchEdit()
+            try {
+                if (!translitMgr.isComposing && composingBuffer.isNotEmpty()) {
+                    ic.finishComposingText()
+                    clearComposingState()
                 }
+                if (!translitMgr.isComposing && shouldRemoveSpaceBeforePunctuation(charToInsert)) {
+                    val textBefore = ic.getTextBeforeCursor(1, 0)
+                    if (textBefore != null && textBefore.endsWith(" ")) {
+                        ic.deleteSurroundingText(1, 0)
+                    }
+                }
+                translitMgr.handleCharacter(charToInsert)
+            } finally {
+                ic.endBatchEdit()
             }
-            translitMgr.handleCharacter(charToInsert)
         } else {
             finishComposing()
             commitCharacterWithPunctuationHandling(ic, charToInsert)
@@ -2164,12 +2242,26 @@ class KiebordService : InputMethodService() {
         val ic = currentInputConnection ?: return
         if (isSwipeDeleting) {
             isSwipeDeleting = false
+            val translitMgr = getTransliterationManager()
+            if (translitMgr.isComposing) {
+                translitMgr.reset()
+            }
+            if (composingBuffer.isNotEmpty()) {
+                clearComposingState()
+            }
             val selectedText = ic.getSelectedText(0)?.toString()
             if (!selectedText.isNullOrEmpty()) {
-                ic.commitText("", 1)
+                suppressRecomposeUntilMs = SystemClock.uptimeMillis() + 250L
+                ic.beginBatchEdit()
+                try {
+                    ic.finishComposingText()
+                    ic.commitText("", 1)
+                } finally {
+                    ic.endBatchEdit()
+                }
                 lastDeletedBatchState = selectedText
             }
-            updateSuggestions()
+            activeSuggestions = emptyList()
         }
     }
 
@@ -2260,15 +2352,19 @@ class KiebordService : InputMethodService() {
             }
 
             // 3. Direct, composing-free continuous deletion (no setComposingRegion / setComposingText / suggestions)
-            val textBefore = ic.getTextBeforeCursor(16, 0)
-            val deleteLen = if (!textBefore.isNullOrEmpty()) EmojiSearchCatalog.getDeleteLengthBeforeCursor(textBefore) else 1
-            val deleted = ic.deleteSurroundingText(deleteLen, 0)
-            if (deleted && lastKnownSelStart >= 0 && lastKnownSelStart == lastKnownSelEnd) {
-                lastKnownSelStart = (lastKnownSelStart - deleteLen).coerceAtLeast(0)
-                lastKnownSelEnd = lastKnownSelStart
-            }
-            if (!deleted && (InputModeResolver.isDirectCommit(editorInfo) || editorInfo?.inputType == InputType.TYPE_NULL)) {
+            if (editorInfo?.inputType == InputType.TYPE_NULL) {
                 sendNavKeyEvent(ic, KeyEvent.KEYCODE_DEL, isSelecting = false)
+            } else {
+                val textBefore = ic.getTextBeforeCursor(16, 0)
+                val deleteLen = if (!textBefore.isNullOrEmpty()) EmojiSearchCatalog.getDeleteLengthBeforeCursor(textBefore) else 1
+                val deleted = ic.deleteSurroundingText(deleteLen, 0)
+                if (deleted && lastKnownSelStart >= 0 && lastKnownSelStart == lastKnownSelEnd) {
+                    lastKnownSelStart = (lastKnownSelStart - deleteLen).coerceAtLeast(0)
+                    lastKnownSelEnd = lastKnownSelStart
+                }
+                if (!deleted && InputModeResolver.isDirectCommit(editorInfo)) {
+                    sendNavKeyEvent(ic, KeyEvent.KEYCODE_DEL, isSelecting = false)
+                }
             }
         } finally {
             ic.endBatchEdit()
