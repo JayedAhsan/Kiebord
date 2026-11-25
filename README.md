@@ -17,11 +17,12 @@
 [![Rust](https://img.shields.io/badge/Engine-Rust%20NDK-orange)](https://www.rust-lang.org)
 [![Kotlin](https://img.shields.io/badge/UI-Jetpack%20Compose-purple)](https://developer.android.com/jetpack/compose)
 [![License](https://img.shields.io/badge/License-GPL%203.0-green.svg)](https://www.gnu.org/licenses/gpl-3.0)
+---
+<a href="https://origintech.live/products/kiebord" target="_blank"><img src="https://origintech.live/badge.svg" alt="Kiebord — featured on Origin Tech" width="200" height="44"></a>
 
 A free, open-source input method editor (IME) for Android built with Jetpack Compose and a native Rust engine.
 
 ---
-
 ## Overview
 
 Kiebord is the result of over 6 years of development on Borno Keyboard, heavily relying on its foundational transliteration architecture while introducing improved gesture typing, spatial touch modeling, and optimized runtime performance.
